@@ -1,5 +1,7 @@
 global _init
 
+extern _init_idt
+
 extern kmain
 
 STACK_POWER equ 12
@@ -10,6 +12,18 @@ _init:
   cli
   cld
   jmp _start
+
+align 16
+
+multiboot:
+  dd 0x1BADB002
+  dd (1 << 16)
+  dd 0 - ((1 << 16) + 0x1BADB002)
+  dd multiboot
+  dd 0x100000
+  dd 0x1007A8
+  dd 0x400000
+  dd _init
 
 section .text
 
@@ -28,6 +42,7 @@ _start:
   push eax
   call _init_gdt
   pop ebp
+  call _init_idt
   call kmain
   pop ecx
   jmp $
@@ -130,23 +145,20 @@ _set_gdt_entry: ; INDEX, BASE, LIMIT, ACCESS[ P |  DPL  | S |     TYPE      ], F
   mov ecx, [esp + 4]
   shl ecx, 3
   add ecx, GDT
-  mov eax, [esp + 8]
-  mov [ecx + 2], al
-  mov [ecx + 3], ah
-  shr eax, 16
-  mov [ecx + 4], al
-  mov [ecx + 7], ah
   mov eax, [esp + 12]
-  mov [ecx + 0], al
-  mov [ecx + 1], ah
+  mov [ecx], eax
   shr eax, 8
   and ah, 15
   mov al, [esp + 20]
   shl al, 5
-  or ah, al
+  or al, ah
+  mov [ecx + 6], al
+  mov eax, [esp + 8]
+  mov [ecx + 2], eax
+  shr eax, 24
+  mov [ecx + 7], al
   mov al, [esp + 16]
   mov [ecx + 5], al
-  mov [ecx + 6], ah
   ret
 
 section .bss
