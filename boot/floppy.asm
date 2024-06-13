@@ -139,7 +139,6 @@ boot:
   div word [BPB.sector_size]
   test dx, dx
   jz .fi0
-    xor dx, dx
     inc ax
   .fi0:
   mov cx, ax
@@ -200,8 +199,7 @@ enable_a20:
   jnz .wait
   ret
 .check:
-  push si
-  push di
+  pusha
   push es
   push ds
   xor ax, ax
@@ -216,8 +214,7 @@ enable_a20:
   cmp al, [ds:si]
   pop ds
   pop es
-  pop di
-  pop si
+  popa
 .end:
   ret
 
@@ -269,6 +266,8 @@ read_sectors:
     pop dx
     pop cx
     pop ax
+    inc ax
+    adc dx, 0
     loop .l0
   .e0:
   pop ax
