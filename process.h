@@ -1,5 +1,5 @@
-#ifndef KERNEL_H
-#define KERNEL_H
+#ifndef PROCESS_H
+#define PROCESS_H
 
 extern int _get_core_index();
 
