@@ -2,7 +2,7 @@ B = build
 
 SMP = 1
 
-c_src = $(shell find . -name *.c)
+c_src = $(shell find . -name "*.c")
 i386_c_obj = $(patsubst ./%.c, $B/i386/c/%.o, $(c_src))
 
 i386_asm_obj = $(patsubst i386/%.asm, $B/i386/asm/%.o, $(shell find i386 -name *.asm))
@@ -24,7 +24,7 @@ $B/i386/asm/%.o: i386/%.asm
 
 $B/i386/c/%.o: %.c
 	mkdir -p $(dir $@)
-	gcc -m32 -c -Os -fno-pie -fno-stack-protector -fno-builtin -ffreestanding -o $@ $^
+	gcc -m32 -march=i386 -c -Os -fno-pie -fno-stack-protector -fno-builtin -ffreestanding -o $@ $^
 
 $B/%.bin: %.asm
 	mkdir -p $(dir $@)

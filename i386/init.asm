@@ -13,18 +13,6 @@ _init:
   cld
   jmp _start
 
-align 16
-
-multiboot:
-  dd 0x1BADB002
-  dd (1 << 16)
-  dd 0 - ((1 << 16) + 0x1BADB002)
-  dd multiboot
-  dd 0x100000
-  dd 0x1007A8
-  dd 0x400000
-  dd _init
-
 section .text
 
 _start:
@@ -45,7 +33,13 @@ _start:
   call _init_idt
   call kmain
   pop ecx
-  jmp $
+  jmp $ ; TODO: IMPLEMENT SHUTDOWN ?
+
+_get_core_index:
+  mov eax, esp
+  sub eax, STACK_TABLE
+  shr eax, STACK_POWER
+  ret
 
 _init_gdt: ; STACK BASE, TSS INDEX
   push 0

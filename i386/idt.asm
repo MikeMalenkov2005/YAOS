@@ -4,6 +4,7 @@ extern _init_pic
 extern _irq_handler
 
 extern kcall
+extern kerror
 
 section .text
 
@@ -140,7 +141,18 @@ _isr_common_stub:
   add esp, 8
   iret
 
-_isr_handler: ; CR2, REGS(48 bytes), ISR INDEX, ERROR CODE
+_isr_handler: ; CR2, REGS(48 bytes), ISR INDEX, ERROR CODE, EIP, CS, EFLAGS
+  mov eax, [esp + 56]
+  shl eax, 5
+  add eax, ERROR_TABLE
+  push eax
+  mov eax, esp
+  add eax, 8
+  push eax
+  add eax, 56
+  push eax
+  call kerror
+  add esp, 12
   ret
 
 %macro IRQ 1
@@ -218,6 +230,76 @@ _syscall:
   pop ds
   popa
   iret
+
+section .data
+
+align 32, db 0
+
+ERROR_TABLE:
+  db "Devision by zero"
+  align 32, db 0
+  db "Debug exception"
+  align 32, db 0
+  db "Non maskable interrupt"
+  align 32, db 0
+  db "Breakpoint"
+  align 32, db 0
+  db "Overflow"
+  align 32, db 0
+  db "Bounds check"
+  align 32, db 0
+  db "Invalid opcode"
+  align 32, db 0
+  db "Coprocessor not available"
+  align 32, db 0
+  db "Double fault"
+  align 32, db 0
+  db "Coprocessor segment overrun"
+  align 32, db 0
+  db "Invalid TSS"
+  align 32, db 0
+  db "Segment not present"
+  align 32, db 0
+  db "Stack exception"
+  align 32, db 0
+  db "General protection exception"
+  align 32, db 0
+  db "Page fault"
+  align 32, db 0
+  db "Coprocessor exception"
+  align 32, db 0
+  db "Reserved"
+  align 32, db 0
+  db "Reserved"
+  align 32, db 0
+  db "Reserved"
+  align 32, db 0
+  db "Reserved"
+  align 32, db 0
+  db "Reserved"
+  align 32, db 0
+  db "Reserved"
+  align 32, db 0
+  db "Reserved"
+  align 32, db 0
+  db "Reserved"
+  align 32, db 0
+  db "Reserved"
+  align 32, db 0
+  db "Reserved"
+  align 32, db 0
+  db "Reserved"
+  align 32, db 0
+  db "Reserved"
+  align 32, db 0
+  db "Reserved"
+  align 32, db 0
+  db "Reserved"
+  align 32, db 0
+  db "Reserved"
+  align 32, db 0
+  db "Reserved"
+  align 32, db 0
 
 section .bss
 

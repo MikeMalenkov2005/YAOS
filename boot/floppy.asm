@@ -158,6 +158,8 @@ boot:
 ;;;---          SWITCH TO PROTECTED MODE           ---;;;
   cli
   push ax
+  mov ax, 3
+  int 0x10
   call enable_a20
   pop cx
   jz panic
@@ -276,8 +278,6 @@ read_sectors:
   pop es
   ret
 
-KERNEL_NAME: db "KERNEL  SYS"
-
 times (SECTOR_SIZE - 2) - ($ - $$) db 0
 dw 0xAA55
 EXTENDED_BOOT:
@@ -315,6 +315,8 @@ TMP_GDT:
   .PTR:
     dw $ - TMP_GDT - 1
     dd TMP_GDT
+
+KERNEL_NAME: db "KERNEL  SYS"
 
 align SECTOR_SIZE, db 0
 

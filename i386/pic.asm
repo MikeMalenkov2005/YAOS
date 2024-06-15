@@ -1,5 +1,6 @@
 global _init_pic
 global _irq_handler
+global _set_pic_mask
 
 section .text
 
@@ -23,7 +24,7 @@ _init_pic: ; MPIC REMAP, SPIC REMAP
   out 0xA1, al
   ret
 
-_irq_handler: ; REGS(48 bytes), IRQ INDEX
+_irq_handler: ; REGS(48 bytes), IRQ INDEX, EIP, CS, EFLAGS
   mov ecx, [esp + 52]
   mov al, 0x20
   cmp ecx, 8
