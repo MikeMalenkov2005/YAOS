@@ -1,11 +1,9 @@
 B = build
 
-SMP = 1
-
 c_src = $(shell find . -name "*.c")
 i386_c_obj = $(patsubst ./%.c, $B/i386/c/%.o, $(c_src))
 
-i386_asm_obj = $(patsubst i386/%.asm, $B/i386/asm/%.o, $(shell find i386 -name *.asm))
+i386_asm_obj = $(patsubst i386/%.asm, $B/i386/asm/%.o, $(shell find i386 -name "*.asm"))
 
 .PHONY:
 i386: $B/boot/floppy.bin kernel.ld $(i386_asm_obj) $(i386_c_obj)
@@ -20,7 +18,7 @@ clean:
 
 $B/i386/asm/%.o: i386/%.asm
 	mkdir -p $(dir $@)
-	nasm -D__SMP__=$(SMP) -f elf32 -o $@ $^
+	nasm -f elf32 -o $@ $^
 
 $B/i386/c/%.o: %.c
 	mkdir -p $(dir $@)
@@ -28,5 +26,5 @@ $B/i386/c/%.o: %.c
 
 $B/%.bin: %.asm
 	mkdir -p $(dir $@)
-	nasm -D__SMP__=$(SMP) -f bin -o $@ $^
+	nasm -f bin -o $@ $^
 

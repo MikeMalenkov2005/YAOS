@@ -1,4 +1,5 @@
 #include "screen.h"
+#include "memory.h"
 
 void kclear(int color) {
   cchar_t *buffer = _get_screen_buffer();
@@ -34,10 +35,39 @@ void kerror(void *position, void *state, const char *message) {
   kprint(message, 4);
 }
 
+void print_hex(unsigned int num, int color) {
+  char string[11];
+  int i = sizeof(string);
+  string[--i] = 0;
+  do {
+    int d = num & 15;
+    string[--i] = d < 10 ? d + '0' : d - 10 + 'A';
+    num = num >> 4;
+  } while (num);
+  string[--i] = 'x';
+  string[--i] = '0';
+  kprint(&string[i], color);
+}
+
+void print_dec(unsigned int num, int color) {
+  char string[11];
+  int i = sizeof(string);
+  string[--i] = 0;
+  do {
+    string[--i] = (num % 10) + '0';
+    num = num / 10;
+  } while (num);
+  kprint(&string[i], color);
+}
+
 int kmain() {
   kclear(2);
   _enable_cursor();
-  kprint("Yet Another Operating System!!!", 2);
+  kprint("Yet Another Operating System! File size: ", 2);
+  print_dec((_get_kernel_file_size() + 1023) / 1024, 2);
+  kprint("KiB Full size: ", 2);
+  print_dec((_get_kernel_memory_size() + 1023) / 1024, 2);
+  kprint("KiB", 2);
   return 0;
 }
 

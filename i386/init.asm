@@ -1,6 +1,11 @@
 global _init
 
 extern _init_idt
+extern _init_mem
+extern _init_ps2
+extern _init_proc
+
+extern _set_pic_mask
 
 extern kmain
 
@@ -16,30 +21,27 @@ _init:
 section .text
 
 _start:
-  %if __SMP__ > 1
-    xor eax, eax
-  %else
-    xor eax, eax
-  %endif
+  xor eax, eax ; TODO: MAYBE DO MULTICORE IN THE FUTURE ?
   mov ecx, eax
   inc eax
   shl eax, STACK_POWER
-  add eax, STACK_TABLE
+  add eax, STACK
   mov esp, eax
   push ecx
   push eax
   call _init_gdt
   pop ebp
   call _init_idt
+  call _init_mem
+  call _init_ps2
+  push 0xFF
+  push 0xFF
+  call _set_pic_mask
+  add esp, 8
+  call _init_proc
   call kmain
   pop ecx
   jmp $ ; TODO: IMPLEMENT SHUTDOWN ?
-
-_get_core_index:
-  mov eax, esp
-  sub eax, STACK_TABLE
-  shr eax, STACK_POWER
-  ret
 
 _init_gdt: ; STACK BASE, TSS INDEX
   push 0
@@ -79,15 +81,15 @@ _init_gdt: ; STACK BASE, TSS INDEX
   mov ecx, eax
   add ecx, 5
   push ecx
-  mov ecx, TSS0.SIZE
+  mov ecx, TSS.SIZE
   mul ecx
   pop ecx
   push eax
-  add eax, TSS0
+  add eax, TSS
 
   push 0
   push 11101001b
-  push (TSS0.SIZE - 1)
+  push (TSS.SIZE - 1)
   push eax
   push ecx
   call _set_gdt_entry
@@ -99,23 +101,23 @@ _init_gdt: ; STACK BASE, TSS INDEX
   push edi
   mov edi, eax
   xor eax, eax
-  mov ecx, TSS0.SIZE
+  mov ecx, TSS.SIZE
   rep stosb
   pop edi
 
-  pop ecx ; TSS0.SIZE * TSS INDEX
+  pop ecx ; TSS.SIZE * TSS INDEX
   mov eax, [esp + 4]
-  mov [ecx + TSS0.esp0], eax
+  mov [ecx + TSS.esp0], eax
   mov al, 16
-  mov [ecx + TSS0.ss0], al
+  mov [ecx + TSS.ss0], al
   mov al, (8 | 3)
-  mov [ecx + TSS0.cs], al
+  mov [ecx + TSS.cs], al
   mov al, (16 | 3)
-  mov [ecx + TSS0.es], al
-  mov [ecx + TSS0.ss], al
-  mov [ecx + TSS0.ds], al
-  mov [ecx + TSS0.fs], al
-  mov [ecx + TSS0.gs], al
+  mov [ecx + TSS.es], al
+  mov [ecx + TSS.ss], al
+  mov [ecx + TSS.ds], al
+  mov [ecx + TSS.fs], al
+  mov [ecx + TSS.gs], al
 
   mov word [GDTR], GDT.SIZE - 1
   mov dword [GDTR + 2], GDT
@@ -159,16 +161,10 @@ section .bss
 
 align 0x1000
 
-STACK_TABLE:
-  resb ((1 << STACK_POWER) * __SMP__)
+STACK:
+  resb (1 << STACK_POWER)
 
-GDT:
-  resq (5 + __SMP__)
-  .SIZE equ ($ - GDT)
-
-%assign i 0
-%rep __SMP__
-TSS %+ i:
+TSS:
   .link:    resd 1
   .esp0:    resd 1
   .ss0:     resd 1
@@ -198,9 +194,11 @@ TSS %+ i:
   .tflag:   resw 1
   .iopb:    resw 1
   .ssp:     resd 1
-  .SIZE equ $ - (TSS %+ i)
-  %assign i i + 1
-%endrep
+  .SIZE equ $ - TSS
+
+GDT:
+  resq 6
+  .SIZE equ ($ - GDT)
 
 GDTR:
   resw 1

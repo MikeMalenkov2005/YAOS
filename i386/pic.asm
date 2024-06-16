@@ -1,6 +1,7 @@
 global _init_pic
 global _irq_handler
 global _set_pic_mask
+global _set_irq_handler
 
 section .text
 
@@ -26,6 +27,18 @@ _init_pic: ; MPIC REMAP, SPIC REMAP
 
 _irq_handler: ; REGS(48 bytes), IRQ INDEX, EIP, CS, EFLAGS
   mov ecx, [esp + 52]
+  mov eax, [IRQ_HANDLER_TABLE + ecx * 4]
+  test eax, eax
+  jz .no_handler
+    mov ecx, esp
+    add ecx, 56
+    push ecx ; POSITION
+    sub ecx, 52
+    push ecx ; STATE
+    call eax
+    add esp, 8
+  .no_handler:
+  mov ecx, [esp + 52]
   mov al, 0x20
   cmp ecx, 8
   jb .mpic
@@ -40,4 +53,17 @@ _set_pic_mask: ; MPIC MASK, SPIC MASK
   mov al, [esp + 8]
   out 0xA1, al
   ret
+
+_set_irq_handler: ; INDEX, FUNCTION POINTER
+  mov ecx, [esp + 4]
+  mov eax, [esp + 8]
+  mov [IRQ_HANDLER_TABLE + ecx * 4], eax
+  ret
+
+section .bss
+
+align 8
+
+IRQ_HANDLER_TABLE:
+  resd 16
 

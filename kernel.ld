@@ -18,12 +18,14 @@ SECTIONS
   .data :
   {
     *(.data)
+    KEEP(*(.eof))
   }
 
   .bss :
   {
-    *(COMMON)
     *(.bss)
+    *(COMMON)
+    KEEP(*(.eom))
   }
 }
 
