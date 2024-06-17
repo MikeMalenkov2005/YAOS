@@ -17,7 +17,8 @@ void kprint(const char *string, int color) {
     int width = _get_screen_width();
     int size = width * _get_screen_height();
     while (*string) {
-      buffer[pos++] = *(string++) | (color << 8);
+      unsigned char c = *(string++);
+      buffer[pos++] = c | (color << 8);
       if (pos >= size) {
         pos -= width;
         for (int i = 0; i < pos; ++i) buffer[i] = buffer[i + width];
