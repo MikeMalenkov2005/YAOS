@@ -34,14 +34,20 @@ _start:
   call _init_idt
   call _init_mem
   call _init_ps2
-  push 0xFF
-  push 0xFF
+  push 11101111b ; SPIC
+  push 11111101b ; MPIC
   call _set_pic_mask
   add esp, 8
   call _init_proc
   call kmain
   pop ecx
-  jmp $ ; TODO: IMPLEMENT SHUTDOWN ?
+  .wait:
+   in al, 0x64
+   test al, 2
+   jnz .wait
+  mov al, 0xFE
+  out 0x64, al ; RESETS THE CPU I GUESS ?
+  jmp $ ; TODO: IMPLEMENT PROPER SHUTDOWN ?
 
 _init_gdt: ; STACK BASE, TSS INDEX
   push 0

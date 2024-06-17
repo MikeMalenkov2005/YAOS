@@ -60,14 +60,24 @@ void print_dec(unsigned int num, int color) {
   kprint(&string[i], color);
 }
 
+extern int _read_first_ps2();
+
 int kmain() {
   kclear(2);
   _enable_cursor();
   kprint("Yet Another Operating System! File size: ", 2);
   print_dec((_get_kernel_file_size() + 1023) / 1024, 2);
-  kprint("KiB Full size: ", 2);
+  kprint("KiB. Full size: ", 2);
   print_dec((_get_kernel_memory_size() + 1023) / 1024, 2);
-  kprint("KiB", 2);
+  kprint("KiB. >:) ", 2);
+  for (int c = _read_first_ps2(); c != 0x81; c = _read_first_ps2()) {
+    if (c > 0) {
+      char tmp[2];
+      tmp[0] = c;
+      tmp[1] = 0;
+      kprint(tmp, 2);
+    }
+  }
   return 0;
 }
 
