@@ -31,10 +31,10 @@ _irq_handler: ; REGS(48 bytes), IRQ INDEX, EIP, CS, EFLAGS
   test eax, eax
   jz .no_handler
     mov ecx, esp
-    add ecx, 56
-    push ecx ; POSITION
-    sub ecx, 52
+    add ecx, 4
     push ecx ; STATE
+    add ecx, 52
+    push ecx ; POSITION
     call eax
     add esp, 8
   .no_handler:

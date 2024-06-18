@@ -148,9 +148,9 @@ _isr_handler: ; CR2, REGS(48 bytes), ISR INDEX, ERROR CODE, EIP, CS, EFLAGS
   push eax
   mov eax, esp
   add eax, 8
-  push eax
+  push eax ; STATE
   add eax, 56
-  push eax
+  push eax ; POSITION
   call kerror
   add esp, 12
   ret
@@ -220,6 +220,11 @@ _syscall:
   push ecx
   push ebx
   push eax
+  ;mov eax, esp
+  ;add eax, 28
+  ;push eax ; STATE
+  ;add eax, 48
+  ;push eax ; POSITION
   call kcall
   add esp, 28
   cli

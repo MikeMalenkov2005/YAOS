@@ -3,6 +3,7 @@ global _init
 extern _init_idt
 extern _init_mem
 extern _init_ps2
+extern _init_pit
 extern _init_proc
 
 extern _set_pic_mask
@@ -34,8 +35,11 @@ _start:
   call _init_idt
   call _init_mem
   call _init_ps2
+  push 1000
+  call _init_pit
+  add esp, 4
   push 11101111b ; SPIC
-  push 11111101b ; MPIC
+  push 11111100b ; MPIC
   call _set_pic_mask
   add esp, 8
   call _init_proc

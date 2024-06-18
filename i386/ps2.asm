@@ -1,5 +1,8 @@
 global _init_ps2
 
+global _clear_first_ps2
+global _clear_second_ps2
+
 global _read_first_ps2
 global _read_second_ps2
 
@@ -10,11 +13,8 @@ PS2_POWER equ 10
 section .text
 
 _init_ps2:
-  xor eax, eax
-  mov [FIRST_PS2_BOT], eax
-  mov [FIRST_PS2_TOP], eax
-  mov [SECOND_PS2_BOT], eax
-  mov [SECOND_PS2_TOP], eax
+  call _clear_first_ps2
+  call _clear_second_ps2
   push _first_ps2_handler
   push 1
   call _set_irq_handler
@@ -25,7 +25,7 @@ _init_ps2:
   add esp, 8
   ret
 
-_first_ps2_handler: ; STATE(IGNORED), POSITION(IGNORED)
+_first_ps2_handler: ; POSITION(IGNORED), STATE(IGNORED)
   in al, 0x60
   mov ecx, [FIRST_PS2_TOP]
   mov [ecx + FIRST_PS2_BUFFER], al
@@ -39,7 +39,7 @@ _first_ps2_handler: ; STATE(IGNORED), POSITION(IGNORED)
   .end:
   ret
 
-_second_ps2_handler: ; STATE(IGNORED), POSITION(IGNORED)
+_second_ps2_handler: ; POSITION(IGNORED), STATE(IGNORED)
   in al, 0x60
   mov ecx, [SECOND_PS2_TOP]
   mov [ecx + SECOND_PS2_BUFFER], al
@@ -51,6 +51,18 @@ _second_ps2_handler: ; STATE(IGNORED), POSITION(IGNORED)
     inc ecx
     mov [SECOND_PS2_BOT], ecx
   .end:
+  ret
+
+_clear_first_ps2:
+  xor eax, eax
+  mov [FIRST_PS2_BOT], eax
+  mov [FIRST_PS2_TOP], eax
+  ret
+
+_clear_second_ps2:
+  xor eax, eax
+  mov [SECOND_PS2_BOT], eax
+  mov [SECOND_PS2_TOP], eax
   ret
 
 _read_first_ps2:
