@@ -1,5 +1,7 @@
 #include "kernel.h"
+#include "keys.h"
 #include "memory.h"
+#include "screen.h"
 #include "term.h"
 
 void print_hex(unsigned int num) {
@@ -49,8 +51,44 @@ int kmain() {
   kprint("KiB.\r\nKernel memory usage: ");
   print_dec((_get_kernel_memory_size() + 1023) / 1024);
   kprint("KiB.\r\n");
-  for (int c = kscan(); c >= 0; c = kscan()) {
+  for (int c = kscan(); c != KEY_ESCAPE; c = kscan()) {
     if (c == '\r') kprint("\r\n");
+    else if (c == KEY_UP) {
+      cchar_t *buffer = _get_screen_buffer();
+      if (buffer) {
+        int pos = _get_cursor_pos() - _get_screen_width();
+        if (pos < 0) pos = 0;
+        while ((pos % _get_screen_width()) && !(buffer[pos - 1] & 0xFF)) pos--;
+        _set_cursor_pos(pos);
+      }
+    }
+    else if (c == KEY_LEFT) {
+      cchar_t *buffer = _get_screen_buffer();
+      if (buffer) {
+        int pos = _get_cursor_pos() - 1;
+        if (pos < 0) pos = 0;
+        while ((pos % _get_screen_width()) && !(buffer[pos - 1] & 0xFF)) pos--;
+        _set_cursor_pos(pos);
+      }
+    }
+    else if (c == KEY_DOWN) {
+      cchar_t *buffer = _get_screen_buffer();
+      if (buffer) {
+        int pos = _get_cursor_pos() + _get_screen_width();
+        if (pos >= _get_screen_width() * _get_screen_height()) pos -= _get_screen_width();
+        while ((pos % _get_screen_width()) && !(buffer[pos - 1] & 0xFF)) pos--;
+        _set_cursor_pos(pos);
+      }
+    }
+    else if (c == KEY_RIGHT) {
+      cchar_t *buffer = _get_screen_buffer();
+      if (buffer) {
+        int pos = _get_cursor_pos() + 1;
+        if (pos >= _get_screen_width() * _get_screen_height()) pos--;
+        while ((pos % _get_screen_width()) && !(buffer[pos - 1] & 0xFF)) pos--;
+        _set_cursor_pos(pos);
+      }
+    }
     else if (c > 0 && c < 0x100) {
       char tmp[2];
       tmp[0] = c;

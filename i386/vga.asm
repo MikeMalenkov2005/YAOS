@@ -63,7 +63,8 @@ _get_screen_buffer:
   ret
 
 _get_screen_width:
-  mov eax, 80
+  mov eax, [0x44A]
+  and eax, 0xFFFF
   ret
 
 _get_screen_height:

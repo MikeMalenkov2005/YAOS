@@ -6,6 +6,9 @@ global _clear_second_ps2
 global _read_first_ps2
 global _read_second_ps2
 
+global _write_first_ps2
+global _write_second_ps2
+
 extern _set_irq_handler
 
 PS2_POWER equ 10
@@ -13,6 +16,15 @@ PS2_POWER equ 10
 section .text
 
 _init_ps2:
+  mov al, 0x20
+  out 0x64, al
+  in al, 0x60
+  and al, 0xBF
+  mov ah, al
+  mov al, 0x60
+  out 0x64, al
+  mov al, ah
+  out 0x60, al
   call _clear_first_ps2
   call _clear_second_ps2
   push _first_ps2_handler
@@ -91,6 +103,42 @@ _read_second_ps2:
     and ecx, ((1 << PS2_POWER) - 1)
     mov [SECOND_PS2_BOT], ecx
   .end:
+  ret
+
+_write_first_ps2: ; BYTE
+  xor ecx, ecx
+  mov cl, 0x80
+  .wait:
+    in al, 0x64
+    test al, 2
+    jz .good
+    loop .wait
+    xor eax, eax
+    not eax
+    ret
+  .good:
+  mov al, [esp + 4]
+  out 0x60, al
+  xor eax, eax
+  ret
+
+_write_second_ps2: ; BYTE
+  mov al, 0xD4
+  out 0x64, al
+  xor ecx, ecx
+  mov cl, 0x80
+  .wait:
+    in al, 0x64
+    test al, 2
+    jz .good
+    loop .wait
+    xor eax, eax
+    not eax
+    ret
+  .good:
+  mov al, [esp + 4]
+  out 0x60, al
+  xor eax, eax
   ret
 
 section .bss
