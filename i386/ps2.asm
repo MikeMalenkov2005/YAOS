@@ -20,6 +20,7 @@ _init_ps2:
   out 0x64, al
   in al, 0x60
   and al, 0xBF
+  or al, 3
   mov ah, al
   mov al, 0x60
   out 0x64, al
@@ -107,7 +108,7 @@ _read_second_ps2:
 
 _write_first_ps2: ; BYTE
   xor ecx, ecx
-  mov cl, 0x80
+  mov cl, 0x10
   .wait:
     in al, 0x64
     test al, 2
@@ -126,7 +127,7 @@ _write_second_ps2: ; BYTE
   mov al, 0xD4
   out 0x64, al
   xor ecx, ecx
-  mov cl, 0x80
+  mov cl, 0x10
   .wait:
     in al, 0x64
     test al, 2

@@ -158,7 +158,7 @@ boot:
 ;;;---          SWITCH TO PROTECTED MODE           ---;;;
   cli
   push ax
-  mov ax, 3
+  mov ax, 0x13
   int 0x10
   call enable_a20
   pop cx

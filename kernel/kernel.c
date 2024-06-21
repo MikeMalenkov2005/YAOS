@@ -1,32 +1,27 @@
 #include "kernel.h"
-#include "keys.h"
-#include "memory.h"
 #include "screen.h"
-#include "term.h"
+#include "serial.h"
 
-void print_hex(unsigned int num) {
-  char string[11];
-  int i = sizeof(string);
-  string[--i] = 0;
-  do {
-    int d = num & 15;
-    string[--i] = d < 10 ? d + '0' : d - 10 + 'A';
-    num = num >> 4;
-  } while (num);
-  string[--i] = 'x';
-  string[--i] = '0';
-  kprint(&string[i]);
-}
+#define ABS(n) ((n) < 0 ? -(n) : (n))
 
-void print_dec(unsigned int num) {
-  char string[11];
-  int i = sizeof(string);
-  string[--i] = 0;
-  do {
-    string[--i] = (num % 10) + '0';
-    num = num / 10;
-  } while (num);
-  kprint(&string[i]);
+#define COLOR_BACKGROUND  169
+#define COLOR_MOUSE       12
+
+void draw_screen(int mouse_x, int mouse_y) {
+  color_t *buffer = _get_screen_buffer();
+  if (buffer) {
+    int width = _get_screen_width();
+    int height = _get_screen_height();
+    for (int y = 0; y < height; ++y) {
+      for (int x = 0; x < width; ++x) {
+        int index = x + y * width;
+        if (ABS(x - mouse_x) < 3 && ABS(y - mouse_y) < 3) {
+          buffer[index] = COLOR_MOUSE;
+        }
+        else buffer[index] = COLOR_BACKGROUND;
+      }
+    }
+  }
 }
 
 int kcall(int fnid, int arg0, int arg1, int arg2, int arg3, int arg4, int arg5) {
@@ -34,7 +29,12 @@ int kcall(int fnid, int arg0, int arg1, int arg2, int arg3, int arg4, int arg5) 
 }
 
 void kerror(void *position, void *state, const char *message) {
-  kprint(message);
+  color_t *buffer = _get_screen_buffer();
+  if (buffer) {
+    int width = _get_screen_width();
+    int height = _get_screen_height();
+    for (int i = 0; i < width * height; ++i) buffer[i] = 1;
+  }
 }
 
 static int timeout = 0;
@@ -44,57 +44,15 @@ void ktimer(void *position, void *state) {
 }
 
 int kmain() {
-  kclear();
-  _enable_cursor();
-  kprint("Yet Another Operating System!\r\nKernel file size: ");
-  print_dec((_get_kernel_file_size() + 1023) / 1024);
-  kprint("KiB.\r\nKernel memory usage: ");
-  print_dec((_get_kernel_memory_size() + 1023) / 1024);
-  kprint("KiB.\r\n");
-  for (int c = kscan(); c != KEY_ESCAPE; c = kscan()) {
-    if (c == '\r') kprint("\r\n");
-    else if (c == KEY_UP) {
-      cchar_t *buffer = _get_screen_buffer();
-      if (buffer) {
-        int pos = _get_cursor_pos() - _get_screen_width();
-        if (pos < 0) pos = 0;
-        while ((pos % _get_screen_width()) && !(buffer[pos - 1] & 0xFF)) pos--;
-        _set_cursor_pos(pos);
-      }
-    }
-    else if (c == KEY_LEFT) {
-      cchar_t *buffer = _get_screen_buffer();
-      if (buffer) {
-        int pos = _get_cursor_pos() - 1;
-        if (pos < 0) pos = 0;
-        while ((pos % _get_screen_width()) && !(buffer[pos - 1] & 0xFF)) pos--;
-        _set_cursor_pos(pos);
-      }
-    }
-    else if (c == KEY_DOWN) {
-      cchar_t *buffer = _get_screen_buffer();
-      if (buffer) {
-        int pos = _get_cursor_pos() + _get_screen_width();
-        if (pos >= _get_screen_width() * _get_screen_height()) pos -= _get_screen_width();
-        while ((pos % _get_screen_width()) && !(buffer[pos - 1] & 0xFF)) pos--;
-        _set_cursor_pos(pos);
-      }
-    }
-    else if (c == KEY_RIGHT) {
-      cchar_t *buffer = _get_screen_buffer();
-      if (buffer) {
-        int pos = _get_cursor_pos() + 1;
-        if (pos >= _get_screen_width() * _get_screen_height()) pos--;
-        while ((pos % _get_screen_width()) && !(buffer[pos - 1] & 0xFF)) pos--;
-        _set_cursor_pos(pos);
-      }
-    }
-    else if (c > 0 && c < 0x100) {
-      char tmp[2];
-      tmp[0] = c;
-      tmp[1] = 0;
-      kprint(tmp);
-    }
+  int x = 0, y = 0;
+  for (;;) {
+    draw_screen(x, y);
+    int c = _wait_first_ps2();
+    x += 2 * ((c == 0x7A || c == 0x74 || c == 0x7D) - (c == 0x69 || c == 0x6B || c == 0x6C));
+    y += 2 * ((c == 0x69 || c == 0x72 || c == 0x7A) - (c == 0x6C || c == 0x75 || c == 0x7D));
+    x = x < 0 ? 0 : (x > 319 ? 319 : x);
+    y = y < 0 ? 0 : (y > 199 ? 199 : y);
+    if (c == 0x76) return 0;
   }
   return 0;
 }
