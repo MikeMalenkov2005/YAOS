@@ -1,6 +1,7 @@
 #include "kernel.h"
 #include "screen.h"
 #include "serial.h"
+#include "sound.h"
 
 #define ABS(n) ((n) < 0 ? -(n) : (n))
 
@@ -43,16 +44,36 @@ void ktimer(void *position, void *state) {
   timeout++;
 }
 
+int com_print(int index, const char *string) {
+  while (*string) {
+    for (int i = 0; _write_com_port(index, *string) < 0; ++i) {
+      if (i == 1000) return -1;
+    }
+    string++;
+  }
+  return 0;
+}
+
 int kmain() {
-  int x = 0, y = 0;
+  int x = 0, y = 0, c = 0;
+  _init_com_port(0, 115200, 8, UART_PARITY_NONE, 1);
   for (;;) {
     draw_screen(x, y);
-    int c = _wait_first_ps2();
-    x += 2 * ((c == 0x7A || c == 0x74 || c == 0x7D) - (c == 0x69 || c == 0x6B || c == 0x6C));
-    y += 2 * ((c == 0x69 || c == 0x72 || c == 0x7A) - (c == 0x6C || c == 0x75 || c == 0x7D));
-    x = x < 0 ? 0 : (x > 319 ? 319 : x);
-    y = y < 0 ? 0 : (y > 199 ? 199 : y);
-    if (c == 0x76) return 0;
+    c = _read_first_ps2();
+    if (c >= 0) {
+      x += 2 * ((c == 0x7A || c == 0x74 || c == 0x7D) - (c == 0x69 || c == 0x6B || c == 0x6C));
+      y += 2 * ((c == 0x69 || c == 0x72 || c == 0x7A) - (c == 0x6C || c == 0x75 || c == 0x7D));
+      x = x < 0 ? 0 : (x > 319 ? 319 : x);
+      y = y < 0 ? 0 : (y > 199 ? 199 : y);
+      if (c == 0x29) _play_sound(1000);
+      if (c == 0x76) return 0;
+      if (c == 0xF0) {
+        c = _wait_first_ps2();
+        if (c == 0x29) _play_sound(0);
+      }
+    }
+    c = _read_com_port(0);
+    if (c >= 0) _write_com_port(0, c);
   }
   return 0;
 }

@@ -3,6 +3,7 @@ global _init
 extern _init_idt
 extern _init_mem
 extern _init_ps2
+extern _init_com
 extern _init_pit
 extern _init_proc
 
@@ -35,6 +36,7 @@ _start:
   call _init_idt
   call _init_mem
   call _init_ps2
+  call _init_com
   push 1000
   call _init_pit
   add esp, 4
