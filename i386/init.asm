@@ -1,6 +1,7 @@
 global _init
 
 extern _init_idt
+extern _init_vga
 extern _init_mem
 extern _init_ps2
 extern _init_com
@@ -34,6 +35,9 @@ _start:
   call _init_gdt
   pop ebp
   call _init_idt
+  push ebx
+  call _init_vga
+  pop ebx
   call _init_mem
   call _init_ps2
   call _init_com

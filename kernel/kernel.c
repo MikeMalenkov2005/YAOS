@@ -3,6 +3,8 @@
 #include "serial.h"
 #include "sound.h"
 
+#include <stddef.h>
+
 #define ABS(n) ((n) < 0 ? -(n) : (n))
 
 #define COLOR_BACKGROUND  169
@@ -11,11 +13,12 @@
 void draw_screen(int mouse_x, int mouse_y) {
   color_t *buffer = _get_screen_buffer();
   if (buffer) {
+    int pitch = _get_screen_pitch();
     int width = _get_screen_width();
     int height = _get_screen_height();
     for (int y = 0; y < height; ++y) {
       for (int x = 0; x < width; ++x) {
-        int index = x + y * width;
+        int index = x + y * pitch;
         if (ABS(x - mouse_x) < 3 && ABS(y - mouse_y) < 3) {
           buffer[index] = COLOR_MOUSE;
         }
@@ -32,9 +35,9 @@ int kcall(int fnid, int arg0, int arg1, int arg2, int arg3, int arg4, int arg5) 
 void kerror(void *position, void *state, const char *message) {
   color_t *buffer = _get_screen_buffer();
   if (buffer) {
-    int width = _get_screen_width();
+    int pitch = _get_screen_pitch();
     int height = _get_screen_height();
-    for (int i = 0; i < width * height; ++i) buffer[i] = 1;
+    for (int i = 0; i < pitch * height; ++i) buffer[i] = 1;
   }
 }
 
@@ -54,17 +57,39 @@ int com_print(int index, const char *string) {
   return 0;
 }
 
+#define num_to_char(n) ((n) < 10 ? (n) + '0' : (n) + 'A' - 10)
+
 int kmain() {
-  int x = 0, y = 0, c = 0;
   _init_com_port(0, 115200, 8, UART_PARITY_NONE, 1);
+  com_print(0, "SVGA Buffer: ");
+  color_t *buffer = _get_screen_buffer();
+  for (int i = 0; i < 8; ++i) {
+    int n = (((size_t)buffer) >> ((7 - i) << 2)) & 15;
+    _write_com_port(0, num_to_char(n));
+  }
+  com_print(0, "\r\nSVGA Pitch: ");
+  int pitch = _get_screen_pitch();
+  for (int i = 0; i < 4; ++i) {
+    int n = (pitch >> ((3 - i) << 2)) & 15;
+    _write_com_port(0, num_to_char(n));
+  }
+  com_print(0, "\r\nSVGA Width: ");
+  int width = _get_screen_width();
+  for (int i = 0; i < 4; ++i) {
+    int n = (width >> ((3 - i) << 2)) & 15;
+    _write_com_port(0, num_to_char(n));
+  }
+  com_print(0, "\r\nSVGA Height: ");
+  int height = _get_screen_height();
+  for (int i = 0; i < 4; ++i) {
+    int n = (height >> ((3 - i) << 2)) & 15;
+    _write_com_port(0, num_to_char(n));
+  }
+  com_print(0, "\r\n");
   for (;;) {
-    draw_screen(x, y);
-    c = _read_first_ps2();
+    draw_screen(10, 10);
+    int c = _read_first_ps2();
     if (c >= 0) {
-      x += 2 * ((c == 0x7A || c == 0x74 || c == 0x7D) - (c == 0x69 || c == 0x6B || c == 0x6C));
-      y += 2 * ((c == 0x69 || c == 0x72 || c == 0x7A) - (c == 0x6C || c == 0x75 || c == 0x7D));
-      x = x < 0 ? 0 : (x > 319 ? 319 : x);
-      y = y < 0 ? 0 : (y > 199 ? 199 : y);
       if (c == 0x29) _play_sound(1000);
       if (c == 0x76) return 0;
       if (c == 0xF0) {
@@ -72,8 +97,6 @@ int kmain() {
         if (c == 0x29) _play_sound(0);
       }
     }
-    c = _read_com_port(0);
-    if (c >= 0) _write_com_port(0, c);
   }
   return 0;
 }

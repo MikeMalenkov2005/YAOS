@@ -12,9 +12,15 @@ FAT_SIZE    equ 9
 FAT_SECTOR  equ EOF + 0
 ROOT_SECTOR equ EOF + 4
 DATA_SECTOR equ EOF + 8
-TEST_BYTE   equ EOF + 12
+VESA_FRAME  equ EOF + 12
+VESA_PITCH  equ EOF + 16
+VESA_WIDTH  equ EOF + 20
+VESA_HEIGHT equ EOF + 24
+VESA_MODE   equ EOF + 28
+TEST_BYTE   equ EOF + 64
 
-DATA_BUFFER equ EOF + SECTOR_SIZE
+VESA_BUFFER equ EOF + SECTOR_SIZE * 1
+DATA_BUFFER equ EOF + SECTOR_SIZE * 2
 
 BPB:
   .jump_to_code:
@@ -158,8 +164,7 @@ boot:
 ;;;---          SWITCH TO PROTECTED MODE           ---;;;
   cli
   push ax
-  mov ax, 0x13
-  int 0x10
+  call set_video
   call enable_a20
   pop cx
   jz panic
@@ -282,6 +287,94 @@ times (SECTOR_SIZE - 2) - ($ - $$) db 0
 dw 0xAA55
 EXTENDED_BOOT:
 
+set_video:
+  xor ax, ax
+  mov [VESA_PITCH + 2], ax
+  mov [VESA_WIDTH + 2], ax
+  mov [VESA_HEIGHT + 2], ax
+  mov [VESA_FRAME], ax
+  not ax
+  mov [VESA_MODE], ax
+  mov ax, 320
+  mov [VESA_PITCH], ax
+  mov [VESA_WIDTH], ax
+  mov ax, 200
+  mov [VESA_HEIGHT], ax
+  mov ax, 0xA
+  mov [VESA_FRAME + 2], ax
+  mov ax, 0x13
+  int 0x10
+  mov ax, 0x4256
+  mov [VESA_BUFFER], ax
+  mov ax, 0x3245
+  mov [VESA_BUFFER + 2], ax
+  push si
+  push di
+  push fs
+  pushf
+  sti
+.prep:
+  push es
+  mov ax, 0x4F00
+  mov di, VESA_BUFFER
+  int 0x10
+  pop es
+  cmp ax, 0x4F
+  jne .end
+  mov si, [VESA_BUFFER + 14]
+  mov ax, [VESA_BUFFER + 16]
+  mov fs, ax
+.find:
+  mov cx, [fs:si]
+  add si, 2
+  cmp cx, 0xFFFF
+  je .end
+  push si
+  push es
+  push cx
+  mov ax, 0x4F01
+  mov di, VESA_BUFFER
+  int 0x10
+  pop cx
+  pop es
+  pop si
+  mov al, [VESA_BUFFER + 25]
+  cmp al, 8
+  jne .find
+  mov ax, [VESA_BUFFER + 18]
+  cmp ax, [VESA_WIDTH]
+  jbe .find
+  mov [VESA_WIDTH], ax
+  mov ax, [VESA_BUFFER + 20]
+  mov [VESA_HEIGHT], ax
+  mov ax, [VESA_BUFFER + 16]
+  mov [VESA_PITCH], ax
+  mov ax, [VESA_BUFFER + 40]
+  mov [VESA_FRAME], ax
+  mov ax, [VESA_BUFFER + 42]
+  mov [VESA_FRAME + 2], ax
+  mov [VESA_MODE], cx
+  jmp .find
+.end:
+  mov cx, [VESA_MODE]
+  cmp cx, 0xFFFF
+  je .vga
+  push es
+  push bx
+  mov ax, 0x4F02
+  mov bx, cx
+  or bx, 0x4000
+  mov di, 0
+  int 0x10
+  pop bx
+  pop es
+.vga:
+  popf
+  pop fs
+  pop di
+  pop si
+  ret
+
 bits 32
 
 relocate:
@@ -304,6 +397,7 @@ relocate:
   mov esi, DATA_BUFFER
   mov edi, 0x100000
   rep movsd
+  mov ebx, VESA_FRAME
   jmp 0x100000
 
 align 8
