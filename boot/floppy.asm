@@ -398,6 +398,8 @@ relocate:
   mov edi, 0x100000
   rep movsd
   mov ebx, VESA_FRAME
+  xor edx, edx
+  mov dl, [EBPB.drive]
   jmp 0x100000
 
 align 8
@@ -422,7 +424,7 @@ times (FAT_SIZE * SECTOR_SIZE) - 4 db 0
 %endrep
 
 VOLUME_LABEL:
-  .short_name:      db "MDOS SYSTEM"
+  .short_name:      db "YAOS SYSTEM"
   .attributes:      db 8
   .attributes_ext:  db 0
   .creation_santis: db 0

@@ -1,5 +1,8 @@
 global _init_pit
 
+global _get_mils
+global _wait_mils
+
 global _play_sound
 
 extern _set_irq_handler
@@ -9,7 +12,7 @@ extern ktimer
 section .text
 
 _init_pit: ; FREQUENCY
-  push ktimer
+  push _pit_handler
   push 0
   call _set_irq_handler
   add esp, 8
@@ -17,16 +20,35 @@ _init_pit: ; FREQUENCY
   test ecx, ecx
   jz .end
     xor edx, edx
-    mov eax, 1193180
+    mov eax, 1193182
     div ecx
-    mov ecx, eax
+    shl eax, 8
     mov al, 0x36
     out 0x43, al
-    mov al, cl
+    shr eax, 8
     out 0x40, al
-    mov al, ch
+    shr eax, 8
     out 0x40, al
   .end:
+  xor eax, eax
+  mov [MILS], eax
+  ret
+
+_pit_handler:
+  inc dword [MILS]
+  jmp ktimer
+
+_get_mils:
+  mov eax, [MILS]
+  ret
+
+_wait_mils: ; MILS TO WAIT
+  mov eax, [esp + 4]
+  add eax, [MILS]
+  .l0:
+    cmp eax, [MILS]
+    jb .l0
+  xor eax, eax
   ret
 
 _play_sound: ; FREQUENCY
@@ -34,7 +56,7 @@ _play_sound: ; FREQUENCY
   test ecx, ecx
   jz .no_sound
   xor edx, edx
-  mov eax, 1193180 ; MAGIC THING
+  mov eax, 1193182 ; MAGIC THING
   div ecx
   mov ecx, eax
   mov al, 0xB6
@@ -56,4 +78,8 @@ _play_sound: ; FREQUENCY
   and al, 0xFC
   out 0x61, al
   ret
+
+section .bss
+
+MILS:    resd 1
 

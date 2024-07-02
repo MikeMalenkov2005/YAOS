@@ -41,55 +41,19 @@ void kerror(void *position, void *state, const char *message) {
   }
 }
 
-static int timeout = 0;
-
 void ktimer(void *position, void *state) {
-  timeout++;
-}
-
-int com_print(int index, const char *string) {
-  while (*string) {
-    for (int i = 0; _write_com_port(index, *string) < 0; ++i) {
-      if (i == 1000) return -1;
-    }
-    string++;
-  }
-  return 0;
 }
 
 #define num_to_char(n) ((n) < 10 ? (n) + '0' : (n) + 'A' - 10)
 
 int kmain() {
-  _init_com_port(0, 115200, 8, UART_PARITY_NONE, 1);
-  com_print(0, "SVGA Buffer: ");
-  color_t *buffer = _get_screen_buffer();
-  for (int i = 0; i < 8; ++i) {
-    int n = (((size_t)buffer) >> ((7 - i) << 2)) & 15;
-    _write_com_port(0, num_to_char(n));
-  }
-  com_print(0, "\r\nSVGA Pitch: ");
-  int pitch = _get_screen_pitch();
-  for (int i = 0; i < 4; ++i) {
-    int n = (pitch >> ((3 - i) << 2)) & 15;
-    _write_com_port(0, num_to_char(n));
-  }
-  com_print(0, "\r\nSVGA Width: ");
-  int width = _get_screen_width();
-  for (int i = 0; i < 4; ++i) {
-    int n = (width >> ((3 - i) << 2)) & 15;
-    _write_com_port(0, num_to_char(n));
-  }
-  com_print(0, "\r\nSVGA Height: ");
-  int height = _get_screen_height();
-  for (int i = 0; i < 4; ++i) {
-    int n = (height >> ((3 - i) << 2)) & 15;
-    _write_com_port(0, num_to_char(n));
-  }
-  com_print(0, "\r\n");
+  int x = 10, y = 10, c = 0;
   for (;;) {
-    draw_screen(10, 10);
+    draw_screen(x, y);
     int c = _read_first_ps2();
     if (c >= 0) {
+      x += (c == 0x7A || c == 0x74 || c == 0x7D) - (c == 0x69 || c == 0x6B || c == 0x6C);
+      y += (c == 0x69 || c == 0x72 || c == 0x7A) - (c == 0x6C || c == 0x75 || c == 0x7D);
       if (c == 0x29) _play_sound(1000);
       if (c == 0x76) return 0;
       if (c == 0xF0) {
