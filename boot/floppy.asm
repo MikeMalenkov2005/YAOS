@@ -347,15 +347,29 @@ set_video:
   je .end
   cmp ax, 0x100
   jb .find
+  ;cmp ax, 0x118
+  ;ja .find
+  mov cx, ax
   push si
   push es
-  push ax
+  push cx
   mov ax, 0x4F01
   mov di, VESA_BUFFER
   int 0x10
   pop cx
   pop es
   pop si
+  mov ax, [VESA_BUFFER]
+  test al, 0x80
+  jz .find
+  test al, 0x10
+  jz .find
+  test al, 0x08
+  jz .find
+  mov al, [VESA_BUFFER + 27]
+  or al, 2
+  cmp al, 6
+  jne .find
   mov al, [VESA_BUFFER + 25]
   cmp al, [VESA_DEPTH]
   jb .find
