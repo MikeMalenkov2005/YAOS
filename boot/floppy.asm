@@ -16,9 +16,11 @@ VESA_FRAME  equ EOF + 12
 VESA_PITCH  equ EOF + 16
 VESA_WIDTH  equ EOF + 20
 VESA_HEIGHT equ EOF + 24
-VESA_MODE   equ EOF + 28
+VESA_DEPTH  equ EOF + 28
+VESA_MODE   equ EOF + 32
 TEST_BYTE   equ EOF + 64
 
+VESA_MODES  equ 0x600
 VESA_BUFFER equ EOF + SECTOR_SIZE * 1
 DATA_BUFFER equ EOF + SECTOR_SIZE * 2
 
@@ -292,9 +294,12 @@ set_video:
   mov [VESA_PITCH + 2], ax
   mov [VESA_WIDTH + 2], ax
   mov [VESA_HEIGHT + 2], ax
+  mov [VESA_DEPTH + 2], ax
   mov [VESA_FRAME], ax
   not ax
   mov [VESA_MODE], ax
+  mov ax, 8
+  mov [VESA_DEPTH], ax
   mov ax, 320
   mov [VESA_PITCH], ax
   mov [VESA_WIDTH], ax
@@ -310,7 +315,6 @@ set_video:
   mov [VESA_BUFFER + 2], ax
   push si
   push di
-  push fs
   pushf
   sti
 .prep:
@@ -323,15 +327,29 @@ set_video:
   jne .end
   mov si, [VESA_BUFFER + 14]
   mov ax, [VESA_BUFFER + 16]
-  mov fs, ax
+  mov di, VESA_MODES
+  push ds
+  mov ds, ax
+  mov cx, 256
+  push di
+  .copy:
+    lodsw
+    stosw
+    cmp ax, 0xFFFF
+    je .copy_end
+    loop .copy
+  .copy_end:
+  pop si
+  pop ds
 .find:
-  mov cx, [fs:si]
-  add si, 2
-  cmp cx, 0xFFFF
+  lodsw
+  cmp ax, 0xFFFF
   je .end
+  cmp ax, 0x100
+  jb .find
   push si
   push es
-  push cx
+  push ax
   mov ax, 0x4F01
   mov di, VESA_BUFFER
   int 0x10
@@ -339,16 +357,21 @@ set_video:
   pop es
   pop si
   mov al, [VESA_BUFFER + 25]
-  cmp al, 8
-  jne .find
+  cmp al, [VESA_DEPTH]
+  jb .find
+  mov ax, [VESA_BUFFER + 20]
+  cmp ax, [VESA_HEIGHT]
+  jb .find
   mov ax, [VESA_BUFFER + 18]
   cmp ax, [VESA_WIDTH]
-  jbe .find
+  jb .find
   mov [VESA_WIDTH], ax
   mov ax, [VESA_BUFFER + 20]
   mov [VESA_HEIGHT], ax
   mov ax, [VESA_BUFFER + 16]
   mov [VESA_PITCH], ax
+  mov al, [VESA_BUFFER + 25]
+  mov [VESA_DEPTH], al
   mov ax, [VESA_BUFFER + 40]
   mov [VESA_FRAME], ax
   mov ax, [VESA_BUFFER + 42]
@@ -370,7 +393,6 @@ set_video:
   pop es
 .vga:
   popf
-  pop fs
   pop di
   pop si
   ret

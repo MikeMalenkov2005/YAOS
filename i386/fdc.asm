@@ -10,6 +10,11 @@ global _fdc_select_drive
 global _fdc_reset
 global _fdc_recalibrate
 global _fdc_seek
+global _fdc_load
+global _fdc_store
+
+global _fdc_get_buffer
+global _fdc_get_buffer_size
 
 extern _read_cmos
 extern _wait_mils
@@ -317,7 +322,69 @@ _fdc_seek: ; DRIVE INDEX, CYLINDER, HEAD
     not eax
     ret
 
-_fdc_transfer_sector: ; C, H, S, EOT, CMD, MODE -> DWORD[ 0 | S | H | C ] IN EAX, DWORD[ ST0 | ST1 | ST2 |  N  ] IN EDX ; DOES NOT SEEK !!
+_fdc_load: ; DRIVE INDEX, C, H, S, EOT -> NEXT DWORD[ 0 | S | H | C ];
+  mov eax, [esp + 12]
+  push eax
+  mov eax, [esp + 8]
+  push eax
+  call _fdc_seek
+  add esp, 8
+  test eax, eax
+  jnz .fail
+  push ebp
+  mov ebp, esp
+  push 0x46
+  push 6
+  mov eax, [ebp + 24]
+  push eax
+  mov eax, [ebp + 20]
+  push eax
+  mov eax, [ebp + 16]
+  push eax
+  mov eax, [ebp + 12]
+  push eax
+  call _fdc_transfer_sector
+  add esp, 24
+  pop ebp
+  ret
+  .fail:
+    xor eax, eax
+    not eax
+    ret
+
+_fdc_store: ; DRIVE INDEX, C, H, S, EOT -> NEXT DWORD[ 0 | S | H | C ];
+  mov eax, [esp + 12]
+  push eax
+  mov eax, [esp + 8]
+  push eax
+  call _fdc_seek
+  add esp, 8
+  test eax, eax
+  jnz .fail
+  push ebp
+  mov ebp, esp
+  push 0x4A
+  push 5
+  mov eax, [ebp + 24]
+  push eax
+  mov eax, [ebp + 20]
+  push eax
+  mov eax, [ebp + 16]
+  push eax
+  mov eax, [ebp + 12]
+  push eax
+  call _fdc_transfer_sector
+  add esp, 24
+  pop ebp
+  ret
+  .fail:
+    xor eax, eax
+    not eax
+    ret
+
+_fdc_transfer_sector: ; C, H, S, EOT, CMD, MODE -> NEXT DWORD[ 0 | S | H | C ]; DOES NOT SEEK !!
+  push ebx
+  push edi
   mov al, [DRIVE]
   push eax
   call _fdc_get_drive_type
@@ -404,17 +471,69 @@ _fdc_transfer_sector: ; C, H, S, EOT, CMD, MODE -> DWORD[ 0 | S | H | C ] IN EAX
       mov al, [WAITING]
       test al, al
       jnz .wait_irq
-    ;;; TODO HANDLE RETURN VALUES
+    call _fdc_read_byte
+    not eax
+    jz .error
+    not eax
+    shl eax, 8
+    mov edi, eax
+    call _fdc_read_byte
+    shl eax, 16
+    or edi, eax
+    call _fdc_read_byte
+    shl eax, 24
+    or edi, eax
+    call _fdc_read_byte
+    mov ebx, eax
+    call _fdc_read_byte
+    shl eax, 8
+    or ebx, eax
+    call _fdc_read_byte
+    shl eax, 16
+    or ebx, eax
+    call _fdc_read_byte
+    or eax, edi
+    test eax, 0x20000
+    jnz .not_writable
+    test ah, 0xC8
+    jnz .error
+    cmp al, SIZE_ID
+    jne .error
+    shr eax, 16
+    test eax, 0x77B5
+    jnz .error
+    mov eax, ebx
+    pop ecx
+    pop edi
+    pop ebx
     ret
   .error:
     pop ecx
     loop .retry_loop
   .fail:
+    pop edi
+    pop ebx
     xor eax, eax
     not eax
     ret
   .retry_loop:
     jmp .retry
+  .not_writable:
+    xor eax, eax
+    not eax
+    dec eax
+    pop ecx
+    pop edi
+    pop ebx
+    ret
+
+_fdc_get_buffer:
+  mov eax, SECTOR_BUFFER
+  ret
+
+_fdc_get_buffer_size:
+  mov eax, SECTOR_SIZE
+  ret
 
 section .data
 
@@ -425,11 +544,11 @@ GPL2_TABLE: db 0, 0x50, 0x50, 0x54, 0x54, 0x54
 
 section .bss
 
-WAITING:  resb 1
-DRIVES:   resb 1
-DRIVE:    resb 1
-
 align SECTOR_SIZE
 
 SECTOR_BUFFER: resb SECTOR_SIZE
+
+WAITING:  resb 1
+DRIVES:   resb 1
+DRIVE:    resb 1
 
