@@ -4,6 +4,17 @@
 #include "floppy.h"
 #include "sound.h"
 
+static int stripes[] = {
+  COLOR(255, 255, 255),
+  COLOR(255, 255, 0),
+  COLOR(0, 255, 255),
+  COLOR(0, 255, 0),
+  COLOR(255, 0, 255),
+  COLOR(255, 0, 0),
+  COLOR(0, 0, 255),
+  COLOR(0, 0, 0),
+};
+
 void plot_pixel(int x, int y, int color) {
   unsigned char* buffer = _get_screen_buffer();
   int bytes = (_get_screen_depth() + 7) >> 3;
@@ -78,7 +89,7 @@ int kmain() {
   for (;;) {
     for (int y = 0; y < _get_screen_height(); ++y) {
       for (int x = 0; x < _get_screen_width(); ++x) {
-        plot_pixel(x, y, _get_screen_color(COLOR(255, 0, 255)));
+        plot_pixel(x, y, _get_screen_color(stripes[((x << 3) / _get_screen_width()) & 7]));
       }
     }
   }

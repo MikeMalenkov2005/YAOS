@@ -20,7 +20,7 @@ VESA_DEPTH  equ EOF + 28
 VESA_MODE   equ EOF + 32
 TEST_BYTE   equ EOF + 64
 
-VESA_MODES  equ 0x600
+TMP_BUFFER  equ 0x500
 VESA_BUFFER equ EOF + SECTOR_SIZE * 1
 DATA_BUFFER equ EOF + SECTOR_SIZE * 2
 
@@ -327,7 +327,7 @@ set_video:
   jne .end
   mov si, [VESA_BUFFER + 14]
   mov ax, [VESA_BUFFER + 16]
-  mov di, VESA_MODES
+  mov di, TMP_BUFFER
   push ds
   mov ds, ax
   mov cx, 256
@@ -347,8 +347,6 @@ set_video:
   je .end
   cmp ax, 0x100
   jb .find
-  ;cmp ax, 0x118
-  ;ja .find
   mov cx, ax
   push si
   push es
@@ -373,12 +371,9 @@ set_video:
   mov al, [VESA_BUFFER + 25]
   cmp al, [VESA_DEPTH]
   jb .find
-  mov ax, [VESA_BUFFER + 20]
-  cmp ax, [VESA_HEIGHT]
-  jb .find
   mov ax, [VESA_BUFFER + 18]
   cmp ax, [VESA_WIDTH]
-  jb .find
+  jbe .find
   mov [VESA_WIDTH], ax
   mov ax, [VESA_BUFFER + 20]
   mov [VESA_HEIGHT], ax
@@ -406,9 +401,78 @@ set_video:
   pop bx
   pop es
 .vga:
+  mov al, [VESA_DEPTH]
+  cmp al, 8
+  jne .no_palette
+    call set_palette
+  .no_palette:
   popf
   pop di
   pop si
+  ret
+
+set_palette:
+  push di
+  xor ax, ax ; [ RED | OUT ]
+  mov cx, ax ; [ GRN | BLU ]
+  mov di, TMP_BUFFER
+  .l0:
+    mov al, ah
+    shl al, 3
+    or al, ah
+    stosb
+    mov al, ch
+    shl al, 3
+    or al, ch
+    stosb
+    mov al, cl
+    shl al, 2
+    or al, cl
+    shl al, 2
+    or al, cl
+    stosb
+    inc cl
+    and cl, 3
+    jnz .l0
+    inc ch
+    and ch, 7
+    jnz .l0
+    inc ah
+    and ah, 7
+    jnz .l0
+  pop di
+  mov ax, [VESA_MODE]
+  not ax
+  jnz .non_vga
+  pushf
+  cli
+  push si
+  mov si, TMP_BUFFER
+  mov dx, 0x3C8
+  mov cx, 256 * 3
+  xor ax, ax
+  out dx, al
+  inc dx
+  rep outsb
+  pop si
+  popf
+  ret
+.non_vga:
+  pushf
+  sti
+  push es
+  push di
+  push bx
+  mov di, TMP_BUFFER
+  mov bx, 0x4F09
+  mov cx, 256 * 3
+  mov dx, 0
+  mov bx, 0
+  int 0x10
+  pop bx
+  pop di
+  pop es
+  popf
   ret
 
 bits 32
