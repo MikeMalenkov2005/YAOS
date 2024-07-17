@@ -373,7 +373,7 @@ set_video:
   jb .find
   mov ax, [VESA_BUFFER + 18]
   cmp ax, [VESA_WIDTH]
-  jbe .find
+  jb .find
   mov [VESA_WIDTH], ax
   mov ax, [VESA_BUFFER + 20]
   mov [VESA_HEIGHT], ax
