@@ -14,5 +14,8 @@ extern int _get_screen_color(int color);
 #define GREEN(color) (((color) >> 8) & 255)
 #define BLUE(color) ((color) & 255)
 
+void plot_pixel(int x, int y, int color);
+void draw_screen();
+
 #endif
 

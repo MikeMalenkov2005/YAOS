@@ -6,9 +6,9 @@ extern _init_mem
 extern _init_ps2
 extern _init_com
 extern _init_pit
-extern _init_proc
 
 extern _set_pic_mask
+extern _set_task_flags
 
 extern kmain
 
@@ -41,6 +41,10 @@ _start:
   call _init_mem
   call _init_ps2
   call _init_com
+  push 1
+  push 0
+  call _set_task_flags
+  add esp, 8
   push 1000
   call _init_pit
   add esp, 4
@@ -48,7 +52,6 @@ _start:
   push 11111100b ; MPIC
   call _set_pic_mask
   add esp, 8
-  call _init_proc
   call kmain
   pop ecx
   .wait:

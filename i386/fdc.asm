@@ -17,7 +17,7 @@ global _fdc_get_buffer
 global _fdc_get_buffer_size
 
 extern _read_cmos
-extern _wait_mils
+extern _wait_ticks
 extern _set_irq_handler
 
 SIZE_ID equ 2
@@ -94,7 +94,7 @@ _fdc_select_drive: ; DRIVE INDEX
   or al, 0xC
   out dx, al
   push 500
-  call _wait_mils
+  call _wait_ticks
   add esp, 4
 .finish:
   xor eax, eax

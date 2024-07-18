@@ -39,6 +39,8 @@ _get_sys_mem_map:
 
 _set_mem_map: ; MEM MAP
   mov eax, [esp + 4]
+  mov al, 0x00
+  and ah, 0xF0
   mov cr3, eax
   ret
 

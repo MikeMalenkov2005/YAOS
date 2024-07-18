@@ -1,7 +1,7 @@
 global _init_pit
 
-global _get_mils
-global _wait_mils
+global _get_ticks
+global _wait_ticks
 
 global _play_sound
 
@@ -31,22 +31,22 @@ _init_pit: ; FREQUENCY
     out 0x40, al
   .end:
   xor eax, eax
-  mov [MILS], eax
+  mov [TICKS], eax
   ret
 
 _pit_handler:
-  inc dword [MILS]
+  inc dword [TICKS]
   jmp ktimer
 
-_get_mils:
-  mov eax, [MILS]
+_get_ticks:
+  mov eax, [TICKS]
   ret
 
-_wait_mils: ; MILS TO WAIT
+_wait_ticks: ; TICKS TO WAIT
   mov eax, [esp + 4]
-  add eax, [MILS]
+  add eax, [TICKS]
   .l0:
-    cmp eax, [MILS]
+    cmp eax, [TICKS]
     jb .l0
   xor eax, eax
   ret
@@ -81,5 +81,5 @@ _play_sound: ; FREQUENCY
 
 section .bss
 
-MILS:    resd 1
+TICKS:    resd 1
 
