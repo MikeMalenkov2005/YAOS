@@ -11,7 +11,7 @@ global _write_second_ps2
 
 extern _set_irq_handler
 
-PS2_POWER equ 10
+PS2_POWER equ 6
 
 section .text
 

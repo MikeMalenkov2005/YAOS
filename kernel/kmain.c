@@ -1,7 +1,6 @@
 #include "kernel.h"
 #include "screen.h"
 #include "serial.h"
-#include "memory.h"
 
 int init_console() {
   return _init_com_port(0, 9600, 8, UART_PARITY_NONE, 1);
@@ -57,24 +56,10 @@ int write_screen_mode() {
   return 0;
 }
 
-int write_kernel_size() {
-  size_t fs = _get_kernel_file_size();
-  size_t ms = _get_kernel_memory_size();
-  if (write_string("Kernel file size: ") |
-      write_decimal(fs / 1024 + (fs % 1024 > 0)) |
-      write_string(" KiB\r\nKernel memory size: ") |
-      write_decimal(ms / 1024 + (ms % 1024 > 0)) |
-      write_string(" KiB\r\n")) return -1;
-  return 0;
-}
-
 int kmain() {
   if (init_console()) return -1;
   write_screen_mode();
-  write_kernel_size();
-  for (;;) {
-    draw_screen();
-  }
+  for (;;) draw_screen();
   return 0;
 }
 

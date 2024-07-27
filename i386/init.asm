@@ -1,14 +1,15 @@
 global _init
 
+global _get_user_stack
+global _set_user_stack
+
 extern _init_idt
 extern _init_vga
-extern _init_mem
 extern _init_ps2
 extern _init_com
 extern _init_pit
 
 extern _set_pic_mask
-extern _set_task_flags
 
 extern kmain
 
@@ -38,13 +39,8 @@ _start:
   push ebx
   call _init_vga
   pop ebx
-  call _init_mem
   call _init_ps2
   call _init_com
-  push 1
-  push 0
-  call _set_task_flags
-  add esp, 8
   push 1000
   call _init_pit
   add esp, 4
@@ -174,6 +170,17 @@ _set_gdt_entry: ; INDEX, BASE, LIMIT, ACCESS[ P |  DPL  | S |     TYPE      ], F
   mov [ecx + 7], al
   mov al, [esp + 16]
   mov [ecx + 5], al
+  ret
+
+_get_user_stack:
+  mov eax, [TSS.esp3]
+  ret
+
+_set_user_stack: ; STACK
+  mov eax, [esp + 4]
+  mov [TSS.esp1], eax
+  mov [TSS.esp2], eax
+  mov [TSS.esp3], eax
   ret
 
 section .bss
