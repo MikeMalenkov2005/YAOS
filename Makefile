@@ -23,11 +23,11 @@ $B/i386/asm/%.o: i386/%.asm
 
 $B/i386/c/%.o: i386/%.c
 	mkdir -p $(dir $@)
-	gcc -m32 -march=i386 -c -Os -fno-pie -fno-stack-protector -fno-builtin -ffreestanding -o $@ $^
+	gcc -m32 -march=i386 -mgeneral-regs-only -c -Os -fno-pie -fno-stack-protector -fno-builtin -ffreestanding -o $@ $^
 
 $B/i386/kernel/%.o: kernel/%.c
 	mkdir -p $(dir $@)
-	gcc -m32 -march=i386 -c -Os -fno-pie -fno-stack-protector -fno-builtin -ffreestanding -o $@ $^
+	gcc -m32 -march=i386 -mgeneral-regs-only -c -Os -fno-pie -fno-stack-protector -fno-builtin -ffreestanding -o $@ $^
 
 $B/%.bin: %.asm
 	mkdir -p $(dir $@)

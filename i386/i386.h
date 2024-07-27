@@ -86,13 +86,8 @@ inline static void wrcr4(size_t val) {
   __asm__ volatile ("mov %0, %%cr4" : : "r"(val));
 }
 
-inline static void cli() {
-  __asm__ volatile ("cli");
-}
-
-inline static void sti() {
-  __asm__ volatile ("sti");
-}
+#define cli __asm__ volatile ("cli")
+#define sti __asm__ volatile ("sti")
 
 struct interrupt_frame {
   size_t ip;
@@ -100,6 +95,21 @@ struct interrupt_frame {
   size_t flags;
   size_t sp; // user to kernel only 
   size_t ss; // user to kernel only
+};
+
+struct registers {
+  size_t gs;
+  size_t fs;
+  size_t es;
+  size_t ds;
+  size_t di;
+  size_t si;
+  size_t bp;
+  size_t sp; // ignored by popa
+  size_t bx;
+  size_t dx;
+  size_t cx;
+  size_t ax;
 };
 
 struct idt_entry {
@@ -118,6 +128,11 @@ struct gdt_entry {
   uint8_t limit_high;
   uint8_t base_high;
 }__attribute__((packed));
+
+#define KCODE 0x08
+#define KDATA 0x10
+#define UCODE 0x18
+#define UDATA 0x20
 
 #endif
 
