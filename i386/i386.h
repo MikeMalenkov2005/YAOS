@@ -86,6 +86,28 @@ inline static void wrcr4(size_t val) {
   __asm__ volatile ("mov %0, %%cr4" : : "r"(val));
 }
 
+inline static void ltr(uint16_t selector) {
+  __asm__ volatile ("ltr %w0" : : "r"(selector));
+}
+
+extern void lcs(uint16_t cs);
+
+inline static void lds(uint16_t ds) {
+  __asm__ volatile ("mov %w0, %%ds" : : "a"(ds));
+}
+
+inline static void les(uint16_t es) {
+  __asm__ volatile ("mov %w0, %%es" : : "a"(es));
+}
+
+inline static void lfs(uint16_t fs) {
+  __asm__ volatile ("mov %w0, %%fs" : : "a"(fs));
+}
+
+inline static void lgs(uint16_t gs) {
+  __asm__ volatile ("mov %w0, %%gs" : : "a"(gs));
+}
+
 #define cli __asm__ volatile ("cli")
 #define sti __asm__ volatile ("sti")
 
@@ -133,6 +155,38 @@ struct gdt_entry {
 #define KDATA 0x10
 #define UCODE 0x18
 #define UDATA 0x20
+
+struct tss {
+  size_t link;
+  size_t sp0;
+  size_t ss0;
+  size_t sp1;
+  size_t ss1;
+  size_t sp2;
+  size_t ss2;
+  size_t sp3;
+  size_t ss3;
+  size_t ip;
+  size_t flags;
+  size_t ax;
+  size_t cx;
+  size_t dx;
+  size_t bx;
+  size_t sp;
+  size_t bp;
+  size_t si;
+  size_t di;
+  size_t es;
+  size_t cs;
+  size_t ss;
+  size_t ds;
+  size_t fs;
+  size_t gs;
+  size_t ldtr;
+  size_t tflag;
+  size_t iopb;
+  size_t ssp;
+};
 
 #endif
 
