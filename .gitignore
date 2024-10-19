@@ -1,4 +1,5 @@
+.vscode/
 build/
+*.iso
+*.sys
 *.img
-*.bin
-

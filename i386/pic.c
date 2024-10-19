@@ -1,14 +1,14 @@
-#include "pic.h"
-#include "i386.h"
+#include <pic.h>
 
-__attribute__((aligned(16)))
-static irq_handler IRQ_HANDLER_TABLE[16];
+#include <io.h>
 
-void _init_pic(uint8_t mpic_remap, uint8_t spic_remap) {
+irqsr_t IRQSR_TABLE[16] __attribute__(());
+
+void init_pic(uint8_t pic1_base, uint8_t pic2_base) {
   outb(0x20, 0x11);
   outb(0xA0, 0x11);
-  outb(0x21, mpic_remap);
-  outb(0xA1, spic_remap);
+  outb(0x21, pic1_base);
+  outb(0xA1, pic2_base);
   outb(0x21, 4);
   outb(0xA1, 2);
   outb(0x21, 1);
@@ -17,19 +17,21 @@ void _init_pic(uint8_t mpic_remap, uint8_t spic_remap) {
   outb(0xA1, 0xFF);
 }
 
-void _irq_handler(struct interrupt_frame *frame, struct registers *regs, int irq_index) {
-  irq_handler handler = IRQ_HANDLER_TABLE[irq_index];
-  if (handler) handler(frame, regs);
-  if (irq_index > 7) outb(0xA0, 0x20);
-  outb(0x20, 0x20);
+void set_pic_mask(uint8_t pic1_mask, uint8_t pic2_mask) {
+  outb(0x21, pic1_mask);
+  outb(0xA1, pic2_mask);
 }
 
-void _set_pic_mask(uint8_t mpic_mask, uint8_t spic_mask) {
-  outb(0x21, mpic_mask);
-  outb(0xA1, spic_mask);
+void set_pic_irqsr(int index, irqsr_t irqsr) {
+  if (index < 16) IRQSR_TABLE[index] = irqsr;
 }
 
-void _set_irq_handler(int index, irq_handler handler) {
-  IRQ_HANDLER_TABLE[index] = handler;
+void irq_handler(struct irq_frame* frame) {
+  size_t index = frame->index;
+  if (index < 16) {
+    irqsr_t irqsr = IRQSR_TABLE[index];
+    if (irqsr) irqsr(frame);
+    if (index > 7) outb(0xA0, 0x20);
+    outb(0x20, 0x20);
+  }
 }
-

@@ -1,13 +1,22 @@
 #ifndef PIC_H
 #define PIC_H
 
-#include <stdint.h>
+#include <cpu.h>
 
-typedef void (*irq_handler)(void*, void*);
+struct irq_frame {
+  struct saved_registers state;
+  size_t index;
+  struct interrupt_frame frame;
+};
 
-void _init_pic(uint8_t mpic_remap, uint8_t spic_remap);
-void _set_pic_mask(uint8_t mpic_mask, uint8_t spic_mask);
-void _set_irq_handler(int index, irq_handler handler);
+typedef void (*irqsr_t)(struct irq_frame*);
+
+void init_pic(uint8_t pic1_base, uint8_t pic2_base);
+
+void set_pic_mask(uint8_t pic1_mask, uint8_t pic2_mask);
+
+void set_pic_irqsr(int index, irqsr_t irqsr);
+
+void irq_handler(struct irq_frame* frame);
 
 #endif
-
