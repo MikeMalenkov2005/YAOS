@@ -1,6 +1,6 @@
 global _start
 
-extern kstart
+extern kinit
 
 default rel
 
@@ -24,7 +24,7 @@ _start:
   mov esp, eax
   push eax ; STACK TOP POINTER
   push ebx ; BOOT INFO POINTER
-  call kstart
+  call kinit
   pop ebx
   pop eax
 .halt:

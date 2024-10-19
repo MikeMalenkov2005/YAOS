@@ -15,8 +15,11 @@ i386_obj = $(patsubst i386/%.asm,$B/i386/asm/%.o,$(i386_asm)) \
 					 $(patsubst i386/%.c,$B/i386/system/%.o,$(i386_src)) \
 					 $(patsubst common/%.c,$B/i386/common/%.o,$(common_src))
 
-.PHONY: qemu-i386
-qemu-i386: $N-i386.sys
+.PHONY: build-i386
+build-i386: $N-i386.sys
+
+.PHONY: run-i386
+run-i386: $N-i386.sys
 	qemu-system-i386 -kernel $^
 
 fd1440.img: $N-i386.sys
@@ -31,7 +34,7 @@ $B/i386/asm/%.o: i386/%.asm
 	mkdir -p $(dir $@)
 	$(AS_i386) -o $@ $<
 
-$B/i386/system/%.o: i386/%.c $(i386_hdr)
+$B/i386/system/%.o: i386/%.c $(i386_hdr) $(common_hdr)
 	mkdir -p $(dir $@)
 	$(CC_i386) -I i386 -o $@ $<
 
