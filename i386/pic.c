@@ -2,24 +2,38 @@
 
 #include <io.h>
 
+/* NOT READY */
+
 irqsr_t IRQSR_TABLE[16] __attribute__(());
 
-void init_pic(uint8_t pic1_base, uint8_t pic2_base) {
+void init_pic(uint8_t base) {
   outb(0x20, 0x11);
+  pio_delay();
   outb(0xA0, 0x11);
-  outb(0x21, pic1_base);
-  outb(0xA1, pic2_base);
+  pio_delay();
+  outb(0x21, base);
+  pio_delay();
+  outb(0xA1, base + 8);
+  pio_delay();
   outb(0x21, 4);
+  pio_delay();
   outb(0xA1, 2);
+  pio_delay();
   outb(0x21, 1);
+  pio_delay();
   outb(0xA1, 1);
+  pio_delay();
   outb(0x21, 0xFF);
   outb(0xA1, 0xFF);
 }
 
-void set_pic_mask(uint8_t pic1_mask, uint8_t pic2_mask) {
-  outb(0x21, pic1_mask);
-  outb(0xA1, pic2_mask);
+void set_pic_mask(uint16_t mask) {
+  outb(0x21, mask & 0xFF);
+  outb(0xA1, mask >> 8);
+}
+
+uint16_t get_pic_mask(void) {
+  return inb(0x21) | ((uint16_t)inb(0xA1) << 8);
 }
 
 void set_pic_irqsr(int index, irqsr_t irqsr) {

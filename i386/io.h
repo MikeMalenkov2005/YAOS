@@ -33,4 +33,6 @@ inline static void outl(uint16_t port, uint32_t val) {
   asm volatile ("outl %0, %w1" : : "a"(val), "Nd"(port) : "memory");
 }
 
+#define pio_delay() outb(0x80, 0)
+
 #endif

@@ -155,7 +155,7 @@ void init_idt(uint16_t kcode_segment) {
   set_idt_entry(46, (uint32_t)irq14, kcode_segment, 0x8E);
   set_idt_entry(47, (uint32_t)irq15, kcode_segment, 0x8E);
   lidt(IDT, sizeof(IDT) - 1);
-  init_pic(32, 40);
+  init_pic(32);
   sti();
 }
 

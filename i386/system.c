@@ -1,3 +1,4 @@
+#include "pit.h"
 #include <multiboot.h>
 #include <cpu.h>
 #include <gdt.h>
@@ -38,6 +39,7 @@ void kinit(struct boot_info* info, uint32_t stack) {
   init_gdt(&TSS, sizeof(TSS) - 1);
   init_idt(GDT2SEG(KERNEL_CODE_GDT_INDEX));
   set_cpu_isr(6, invalid_opcode_handler);
+  init_pit(1000);
 
   screen_mode.buffer = (info->flags & MB_VIDEO_BIT) ? (void*)(size_t)info->framebuffer.addr : (void*)0xB8000;
   screen_mode.pitch = (info->flags & MB_VIDEO_BIT) ? (int)info->framebuffer.pitch : 160;

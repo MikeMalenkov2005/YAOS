@@ -1,34 +1,26 @@
 #include <fpu.h>
 
 #include <cpu.h>
+#include <idt.h>
 
-int fpu_exists;
-
-struct fpu_state emulated_fpu_state __attribute__((aligned(16)));
+void fpu_exception_handler(struct isr_frame* frame) {
+  /* TODO: not implemented */
+}
 
 int init_fpu(void) {
-  emulated_fpu_state.status_word = 0x5A5A;
+  int no_fpu = 0x5A5A;
   wrcr0((rdcr0() & ~(size_t)0b1100) | 0b10);
   asm volatile ("fninit");
-  asm volatile ("fnstsw %0" : "=m"(emulated_fpu_state.status_word) : : "memory");
-  if (emulated_fpu_state.status_word) {
-    fpu_exists = 0;
-    wrcr0((rdcr0() & ~(size_t)0b10) | 0b100);
-  }
-  else fpu_exists = 1;
-  return fpu_exists;
+  asm volatile ("fnstsw %0" : "=m"(no_fpu) : : "memory");
+  if (no_fpu) wrcr0((rdcr0() & ~(size_t)0b10) | 0b100);
+  else set_cpu_isr(16, fpu_exception_handler);
+  return !no_fpu;
 }
 
 void save_fpu(struct fpu_state* state) {
-  if (fpu_exists) {
-    asm volatile ("fnsave %0" : "=m"(*state) : : "memory");
-  }
-  else *state = emulated_fpu_state;
+  asm volatile ("fnsave %0" : "=m"(*state) : : "memory");
 }
 
 void load_fpu(struct fpu_state* state) {
-  if (fpu_exists) {
-    asm volatile ("frstor %0" : : "m"(*state) : "memory");
-  }
-  else emulated_fpu_state = *state;
+  asm volatile ("frstor %0" : : "m"(*state) : "memory");
 }
