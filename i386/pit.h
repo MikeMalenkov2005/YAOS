@@ -3,8 +3,6 @@
 
 #include <stdint.h>
 
-/* NOT READY */
-
 #define PIT_BASE_FREQUENCY  1193182
 
 #define PIT_MAX_FREQUENCY (BASE_FREQUENCY >> 1)

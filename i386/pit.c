@@ -3,8 +3,6 @@
 #include <pic.h>
 #include <io.h>
 
-/* NOT READY */
-
 void pit_irqsr(struct irq_frame* frame) {
 }
 

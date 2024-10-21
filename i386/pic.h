@@ -3,8 +3,6 @@
 
 #include <cpu.h>
 
-/* NOT READY */
-
 struct irq_frame {
   struct saved_registers state;
   size_t index;

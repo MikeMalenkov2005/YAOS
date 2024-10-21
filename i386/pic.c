@@ -2,8 +2,6 @@
 
 #include <io.h>
 
-/* NOT READY */
-
 irqsr_t IRQSR_TABLE[16] __attribute__(());
 
 void init_pic(uint8_t base) {
