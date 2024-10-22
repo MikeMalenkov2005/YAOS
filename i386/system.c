@@ -4,6 +4,7 @@
 #include <idt.h>
 #include <pit.h>
 #include <fpu.h>
+#include <pci.h>
 
 #include <cpuid.h>
 
@@ -46,6 +47,26 @@ void print_decimal(int x, int y, unsigned int d) {
   }
 }
 
+void print_hex(int x, int y, unsigned int h) {
+  char s[8];
+  int i = sizeof(s);
+  do {
+    int d = h & 15;
+    s[--i] = d + (d < 10 ? '0' : 'A' - 10);
+    h = h >> 4;
+  } while (h);
+  for (int j = i; j < sizeof(s); ++j) {
+    ((uint16_t*)screen_mode.buffer)[y * screen_mode.width + x + j - i] = s[j] | 0x200;
+  }
+}
+
+int pci_device_line;
+
+void pci_device_logger(uint16_t device, uint32_t interface) {
+  print_hex(0, pci_device_line, device);
+  print_hex(5, pci_device_line++, interface);
+}
+
 void kinit(struct boot_info* info, uint32_t stack) {
   mzero(&TSS, sizeof(TSS));
   TSS.iopb = sizeof(TSS);
@@ -64,6 +85,9 @@ void kinit(struct boot_info* info, uint32_t stack) {
   if (init_fpu()) {
     *(uint64_t*)screen_mode.buffer = UINT64_C(0x0220025502500246);
   }
+
+  pci_device_line = 2;
+  pci_enumerate_devices(pci_device_logger);
 
   if (__get_cpuid_max(0, NULL)) {
     int unused;

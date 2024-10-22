@@ -1,31 +1,22 @@
 #ifndef PCI_H
 #define PCI_H
 
-#include <io.h>
+#include <stdint.h>
 
-/* NOT READY */
+#define PCI_DEVICE(bus, slot, func) \
+  ((uint16_t)(((bus) << 8) | (((slot) & 0x1F) << 3) | ((func) & 7)))
 
-/* Only support one mode of addressing (NOT deprecated) */
+typedef void (*pci_device_enumerator)(uint16_t device, uint32_t interface);
 
-#define PCI_CFG_ADDR_PORT 0xCF8
-#define PCI_CFG_DATA_PORT 0xCFC
+uint32_t pci_read_config(uint16_t device, uint8_t offset);
+uint16_t pci_read_config_word(uint16_t device, uint8_t offset);
+uint8_t pci_read_config_byte(uint16_t device, uint8_t offset);
 
-inline static uint32_t pci_read_cfg_reg(int bus, int slot, int func, int offset) {
-  uint32_t address = ((bus & 0xFF) << 16) | ((slot & 0x1F) << 11) |
-      ((func & 7) << 8) | (offset & 0xFC) | UINT32_C(0x80000000);
-  outl(PCI_CFG_ADDR_PORT, address);
-  return inl(PCI_CFG_DATA_PORT);
-}
+void pci_write_config(uint16_t device, uint8_t offset, uint32_t config);
+void pci_write_config_word(uint16_t device, uint8_t offset, uint16_t config);
+void pci_write_config_byte(uint16_t device, uint8_t offset, uint8_t config);
 
-#define pci_read_cfg_word(bus, slot, func, offset) \
-  ((uint16_t)((pci_read_cfg_reg(bus, slot, func, offset) >> (((offset) & 2) << 3)) & 0xFFFF))
-
-#define pci_read_cfg_byte(bus, slot, func, offset) \
-  ((uint8_t)((pci_read_cfg_reg(bus, slot, func, offset) >> (((offset) & 3) << 3)) & 0xFF))
-
-#define pci_get_vendor_id(bus, slot) pci_read_cfg_word(bus, slot, 0, 0)
-#define pci_get_device_id(bus, slot) pci_read_cfg_word(bus, slot, 0, 2)
-#define pci_get_function_info(bus, slot, func) pci_read_cfg_reg(bus, slot, func, 8)
+void pci_enumerate_devices(pci_device_enumerator enumerator);
 
 #endif
 
