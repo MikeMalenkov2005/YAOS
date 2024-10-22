@@ -14,7 +14,7 @@ struct apm_table {
   uint16_t cs32_len;
   uint16_t cs16_len;
   uint16_t ds_len;
-}__attribute__((packed));
+};
 
 #endif
 

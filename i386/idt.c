@@ -2,17 +2,16 @@
 
 #include <pic.h>
 
-struct idt_entry IDT[256] __attribute__((aligned(16)));
+struct idt_entry IDT[256] __aligned(16);
 
-isr_t ISR_TABLE[32] __attribute__((aligned(16)));
+isr_t ISR_TABLE[32] __aligned(16);
 
 void isr_handler(struct isr_frame* frame) {
   isr_t isr = ISR_TABLE[frame->index];
   if (isr) isr(frame);
 }
 
-__attribute__((naked))
-void isr_common() {
+void __naked isr_common() {
   asm volatile ("pusha");
   asm volatile ("push %esp");
   asm volatile ("call %P0" : : "i"(isr_handler));
@@ -22,8 +21,7 @@ void isr_common() {
   asm volatile ("iret");
 }
 
-__attribute__((naked))
-void irq_common() {
+void __naked irq_common() {
   asm volatile ("pusha");
   asm volatile ("push %esp");
   asm volatile ("call %P0" : : "i"(irq_handler));
@@ -34,23 +32,20 @@ void irq_common() {
 }
 
 #define ISR_NOCODE(n)                           \
-__attribute__((naked))                          \
-void isr##n() {                                 \
+void __naked isr##n() {                                 \
   asm volatile ("push %0" : : "N"(0));          \
   asm volatile ("push %0" : : "N"(n));          \
   asm volatile ("jmp %P0" : : "i"(isr_common)); \
 }
 
 #define ISR_WITHCODE(n)                         \
-__attribute__((naked))                          \
-void isr##n() {                                 \
+void __naked isr##n() {                                 \
   asm volatile ("push %0" : : "N"(n));          \
   asm volatile ("jmp %P0" : : "i"(isr_common)); \
 }
 
 #define IRQ(n)                                  \
-__attribute__((naked))                          \
-void irq##n() {                                 \
+void __naked irq##n() {                                 \
   asm volatile ("push %0" : : "N"(n));          \
   asm volatile ("jmp %P0" : : "i"(irq_common)); \
 }

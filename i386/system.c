@@ -1,13 +1,15 @@
-#include "pit.h"
 #include <multiboot.h>
 #include <cpu.h>
 #include <gdt.h>
 #include <idt.h>
+#include <pit.h>
 #include <fpu.h>
 
 #include <cpuid.h>
 
-struct tss_struct TSS __attribute__((aligned(16)));
+#include <attributes.h>
+
+struct tss_struct TSS __aligned(16);
 
 struct screen_mode {
   void* buffer;
@@ -29,6 +31,18 @@ void invalid_opcode_handler(struct isr_frame* frame) {
     frame->state.dx = 0;
     frame->state.cx = 0;
     frame->state.ax = 0;
+  }
+}
+
+void print_decimal(int x, int y, unsigned int d) {
+  char s[10];
+  int i = sizeof(s);
+  do {
+    s[--i] = d % 10 + '0';
+    d = d / 10;
+  } while (d);
+  for (int j = i; j < sizeof(s); ++j) {
+    ((uint16_t*)screen_mode.buffer)[y * screen_mode.width + x + j - i] = s[j] | 0x200;
   }
 }
 

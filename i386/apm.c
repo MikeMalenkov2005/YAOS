@@ -1,11 +1,13 @@
 #include <apm.h>
 
+#include <attributes.h>
+
 #include <gdt.h>
 #include <cpu.h>
 
 /* NOT READY */
 
-struct gdt_entry APM_LDT[4] __attribute__((aligned(16)));
+struct gdt_entry APM_LDT[4] __aligned(16);
 
 void set_apm_segment(int index, uint32_t base, uint16_t limit, uint8_t flags, uint8_t access) {
   APM_LDT[index].limit_low = limit;

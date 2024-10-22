@@ -3,10 +3,12 @@
 
 #include <stdint.h>
 
+#include <attributes.h>
+
 struct fpu_float {
   uint64_t significand;
   uint16_t exponent;
-}__attribute__((packed));
+}__packed;
 
 struct fpu_state {
   uint32_t control_word;
@@ -18,7 +20,7 @@ struct fpu_state {
   uint32_t operand_pointer;
   uint32_t operand_segment;
   struct fpu_float register_stack[8];
-}__attribute__((packed));
+}__packed;
 
 int init_fpu(void);
 

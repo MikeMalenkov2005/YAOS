@@ -3,11 +3,13 @@
 
 #include <tss.h>
 
+#include <attributes.h>
+
 inline static void lgdt(void* base, uint16_t limit) {
   struct {
     uint16_t limit;
     void* base;
-  }__attribute__((packed)) gdtr = { limit, base };
+  }__packed gdtr = { limit, base };
   asm volatile ("lgdt %0" : : "m"(gdtr));
 }
 
@@ -18,7 +20,7 @@ struct gdt_entry {
   uint8_t access_byte;
   uint8_t limit_high;
   uint8_t base_high;
-}__attribute__((packed));
+};
 
 #define NULL_GDT_INDEX        0
 #define KERNEL_CODE_GDT_INDEX 1
@@ -26,7 +28,8 @@ struct gdt_entry {
 #define USER_CODE_GDT_INDEX   3
 #define USER_DATA_GDT_INDEX   4
 #define TSS_GDT_INDEX         5
-#define TOTAL_GDT_ENTRIES     6
+#define LDT_GDT_INDEX         6
+#define TOTAL_GDT_ENTRIES     7
 
 #define GDT2SEG(index)  (index << 3)
 

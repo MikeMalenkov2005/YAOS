@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include <attributes.h>
+
 #define MB_MEMORY_BIT (1 << 0)
 #define MB_DEVICE_BIT (1 << 1)
 #define MB_CMD_BIT    (1 << 2)
@@ -49,8 +51,8 @@ struct boot_info {
       uint16_t seg;
       uint16_t off;
       uint16_t len;
-    }__attribute__((packed)) interface;
-  }__attribute__((packed)) vbe;
+    } interface;
+  } vbe;
   struct {
     uint64_t addr;
     uint32_t pitch;
@@ -59,7 +61,7 @@ struct boot_info {
     uint8_t bpp;
     uint8_t type;
     uint8_t color_info[6];
-  }__attribute__((packed)) framebuffer;
-}__attribute__((packed));
+  }__packed framebuffer;
+};
 
 #endif

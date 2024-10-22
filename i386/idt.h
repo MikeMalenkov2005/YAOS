@@ -3,11 +3,13 @@
 
 #include <cpu.h>
 
+#include <attributes.h>
+
 inline static void lidt(void* base, uint16_t limit) {
   struct {
     uint16_t limit;
     void* base;
-  }__attribute__((packed)) idtr = { limit, base };
+  }__packed idtr = { limit, base };
   asm volatile ("lidt %0" : : "m"(idtr));
 }
 
@@ -26,7 +28,7 @@ struct idt_entry {
   uint8_t reserved;
   uint8_t attributes;
   uint16_t offset_high;
-}__attribute__((packed));
+};
 
 void init_idt(uint16_t kcode_segment);
 

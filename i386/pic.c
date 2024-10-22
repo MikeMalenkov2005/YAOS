@@ -2,7 +2,9 @@
 
 #include <io.h>
 
-irqsr_t IRQSR_TABLE[16] __attribute__(());
+#include <attributes.h>
+
+irqsr_t IRQSR_TABLE[16] __aligned(16);
 
 void init_pic(uint8_t base) {
   outb(0x20, 0x11);

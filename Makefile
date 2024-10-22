@@ -26,6 +26,7 @@ fd1440.img: $N-i386.sys
 	cp $^ boot/minboot/KERNEL.SYS
 	$(MAKE) -C boot/minboot fd1440.img
 	mv boot/minboot/fd1440.img $@
+	$(MAKE) -C boot/minboot clean
 
 $N-i386.sys: i386/kernel.ld $(i386_obj)
 	$(LD_i386) -o $@ -T $^
@@ -44,5 +45,5 @@ $B/i386/common/%.o: common/%.c $(common_hdr)
 
 .PHONY: clean
 clean:
-	$(MAKE) -C boot/minboot clean
 	rm -rf $B $N-* *.img
+

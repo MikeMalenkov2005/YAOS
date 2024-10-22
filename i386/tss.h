@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include <attributes.h>
+
 inline static void ltr(uint16_t selector) {
   asm volatile ("ltr %w0" : : "r"(selector));
 }
@@ -36,6 +38,6 @@ struct tss_struct {
   uint32_t ldtr;
   uint16_t tflag;
   uint16_t iopb;
-}__attribute__((packed));
+};
 
 #endif
