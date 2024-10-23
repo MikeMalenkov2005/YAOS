@@ -1,3 +1,4 @@
+#include "apm.h"
 #include <multiboot.h>
 #include <cpu.h>
 #include <gdt.h>
@@ -9,6 +10,7 @@
 #include <cpuid.h>
 
 #include <attributes.h>
+#include <stdint.h>
 
 struct tss_struct TSS __aligned(16);
 
@@ -90,7 +92,7 @@ void kinit(struct boot_info* info, uint32_t stack) {
   pci_enumerate_devices(pci_device_logger);
 
   if (__get_cpuid_max(0, NULL)) {
-    int unused;
+    uint32_t unused;
     char vendor[12];
     __get_cpuid(0, &unused, (void*)&vendor[0], (void*)&vendor[8], (void*)&vendor[4]);
     for (int i = 0; i < sizeof(vendor); ++i) {

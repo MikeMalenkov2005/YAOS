@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-/* NOT READY */
+/* NOT READY DUE TO INABILITY TO TEST WITH QEMU */
 
 struct apm_table {
   uint16_t version;
@@ -15,6 +15,8 @@ struct apm_table {
   uint16_t cs16_len;
   uint16_t ds_len;
 };
+
+int init_apm(struct apm_table* table);
 
 #endif
 

@@ -22,6 +22,22 @@ struct gdt_entry {
   uint8_t base_high;
 };
 
+#define GDT_ENTRY(base, limit, access, flags)                     \
+  (struct gdt_entry) {                                            \
+    .limit_low = (limit) & 0xFFFF,                                \
+    .base_low = (base) & 0xFFFF,                                  \
+    .base_mid = ((base) >> 16) & 0xFF,                            \
+    .access_byte = (access) & 0xFF,                               \
+    .limit_high = (((limit) >> 16) & 15) | (((flags) & 15) << 4), \
+    .base_high = ((base) >> 24) & 0xFF                            \
+  }
+
+#define GDT_ENTRY_BASE(entry) \
+  (((uint32_t)(entry).base_low) | ((entry).base_mid << 16) | ((entry).base_high << 24))
+
+#define GDT_ENTRY_LIMIT(entry) \
+  (((uint32_t)(entry).limit_low) | (((entry).limit_high & 15) << 16))
+
 #define NULL_GDT_INDEX        0
 #define KERNEL_CODE_GDT_INDEX 1
 #define KERNEL_DATA_GDT_INDEX 2
@@ -34,5 +50,6 @@ struct gdt_entry {
 #define GDT2SEG(index)  (index << 3)
 
 void init_gdt(struct tss_struct* tss, uint32_t tss_limit);
+void set_ldt(struct gdt_entry* table, uint8_t length);
 
 #endif

@@ -2,35 +2,35 @@
 
 #include <io.h>
 
-#define PCI_CONFIG_ADDRESS(device, reg) \
-  (UINT32_C(0x80000000) | ((device) << 8) | ((offset) & 0xFC))
+#define PCI_CONFIG_ADDRESS(device, offset) \
+  (UINT32_C(0x80000000) | (((offset) & 15) << 24) | ((device) << 8) | ((offset) & 0xFC))
 
-uint32_t pci_read_config(uint16_t device, uint8_t offset) {
+uint32_t pci_read_config(uint16_t device, uint16_t offset) {
   outl(0xCF8, PCI_CONFIG_ADDRESS(device, offset));
   return inl(0xCFC);
 }
 
-uint16_t pci_read_config_word(uint16_t device, uint8_t offset) {
+uint16_t pci_read_config_word(uint16_t device, uint16_t offset) {
   outl(0xCF8, PCI_CONFIG_ADDRESS(device, offset));
   return inw(0xCFC + (offset & 2));
 }
 
-uint8_t pci_read_config_byte(uint16_t device, uint8_t offset) {
+uint8_t pci_read_config_byte(uint16_t device, uint16_t offset) {
   outl(0xCF8, PCI_CONFIG_ADDRESS(device, offset));
   return inb(0xCFC + (offset & 3));
 }
 
-void pci_write_config(uint16_t device, uint8_t offset, uint32_t config) {
+void pci_write_config(uint16_t device, uint16_t offset, uint32_t config) {
   outl(0xCF8, PCI_CONFIG_ADDRESS(device, offset));
   outl(0xCFC, config);
 }
 
-void pci_write_config_word(uint16_t device, uint8_t offset, uint16_t config) {
+void pci_write_config_word(uint16_t device, uint16_t offset, uint16_t config) {
   outl(0xCF8, PCI_CONFIG_ADDRESS(device, offset));
   outw(0xCFC + (offset & 2), config);
 }
 
-void pci_write_config_byte(uint16_t device, uint8_t offset, uint8_t config) {
+void pci_write_config_byte(uint16_t device, uint16_t offset, uint8_t config) {
   outl(0xCF8, PCI_CONFIG_ADDRESS(device, offset));
   outb(0xCFC + (offset & 3), config);
 }
