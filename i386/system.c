@@ -1,4 +1,3 @@
-#include "apm.h"
 #include <multiboot.h>
 #include <cpu.h>
 #include <gdt.h>
@@ -6,6 +5,8 @@
 #include <pit.h>
 #include <fpu.h>
 #include <pci.h>
+
+#include <io.h>
 
 #include <cpuid.h>
 
@@ -16,9 +17,10 @@ struct tss_struct TSS __aligned(16);
 
 struct screen_mode {
   void* buffer;
-  int pitch;
-  int width;
-  int height;
+  uint16_t pitch;
+  uint16_t width;
+  uint16_t height;
+  uint16_t bpp;
 } screen_mode;
 
 void mzero(void* buffer, size_t size) {
@@ -49,14 +51,15 @@ void print_decimal(int x, int y, unsigned int d) {
   }
 }
 
-void print_hex(int x, int y, unsigned int h) {
+void print_hex(int x, int y, unsigned int h, int p) {
   char s[8];
   int i = sizeof(s);
   do {
     int d = h & 15;
     s[--i] = d + (d < 10 ? '0' : 'A' - 10);
     h = h >> 4;
-  } while (h);
+    if (p) p--;
+  } while (h || p);
   for (int j = i; j < sizeof(s); ++j) {
     ((uint16_t*)screen_mode.buffer)[y * screen_mode.width + x + j - i] = s[j] | 0x200;
   }
@@ -64,9 +67,34 @@ void print_hex(int x, int y, unsigned int h) {
 
 int pci_device_line;
 
-void pci_device_logger(uint16_t device, uint32_t interface) {
-  print_hex(0, pci_device_line, device);
-  print_hex(5, pci_device_line++, interface);
+void pci_device_installer(uint16_t device, uint32_t id, uint32_t interface) {
+  print_hex(0, pci_device_line, device, 4);
+  print_hex(5, pci_device_line, interface, 8);
+  print_hex(14, pci_device_line++, id, 8);
+  if (id == 0x11111234) {
+    /* SETUP BOCHS GRAPHICS ADAPTER */
+    outw(0x1CE, 4);
+    outw(0x1CF, 0);
+    outw(0x1CE, 1);
+    outw(0x1CF, 640);
+    outw(0x1CE, 2);
+    outw(0x1CF, 480);
+    outw(0x1CE, 3);
+    outw(0x1CF, 32);
+    outw(0x1CE, 4);
+    outw(0x1CF, 0x41);
+    uint32_t bar0 = pci_read_config(device, 0x10);
+    uint32_t* lfb = (void*)(((size_t)(bar0 & ~15)) | (((size_t)(bar0 & 8 ? pci_read_config(device, 0x14) : 0)) << 32));
+    screen_mode.buffer = lfb;
+    outw(0x1CE, 1);
+    screen_mode.width = inw(0x1CF);
+    outw(0x1CE, 2);
+    screen_mode.height = inw(0x1CF);
+    outw(0x1CE, 3);
+    screen_mode.bpp = inw(0x1CF);
+    screen_mode.pitch = (screen_mode.width * screen_mode.bpp + 7) >> 3;
+    for (int i = 0; i < screen_mode.width * screen_mode.height; ++i) lfb[i] = 0xFF00FF;
+  }
 }
 
 void kinit(struct boot_info* info, uint32_t stack) {
@@ -82,6 +110,7 @@ void kinit(struct boot_info* info, uint32_t stack) {
   screen_mode.pitch = (info->flags & MB_VIDEO_BIT) ? (int)info->framebuffer.pitch : 160;
   screen_mode.width = (info->flags & MB_VIDEO_BIT) ? (int)info->framebuffer.width : 80;
   screen_mode.height = (info->flags & MB_VIDEO_BIT) ? (int)info->framebuffer.height : 25;
+  screen_mode.bpp = (info->flags & MB_VIDEO_BIT) ? (int)info->framebuffer.bpp : 16;
   mzero(screen_mode.buffer, screen_mode.pitch * screen_mode.height);
 
   if (init_fpu()) {
@@ -89,7 +118,7 @@ void kinit(struct boot_info* info, uint32_t stack) {
   }
 
   pci_device_line = 2;
-  pci_enumerate_devices(pci_device_logger);
+  pci_enumerate_devices(pci_device_installer);
 
   if (__get_cpuid_max(0, NULL)) {
     uint32_t unused;

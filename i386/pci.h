@@ -6,7 +6,7 @@
 #define PCI_DEVICE(bus, slot, func) \
   ((uint16_t)(((bus) << 8) | (((slot) & 0x1F) << 3) | ((func) & 7)))
 
-typedef void (*pci_device_enumerator)(uint16_t device, uint32_t interface);
+typedef void (*pci_device_enumerator)(uint16_t device, uint32_t id, uint32_t interface);
 
 uint32_t pci_read_config(uint16_t device, uint16_t offset);
 uint16_t pci_read_config_word(uint16_t device, uint16_t offset);

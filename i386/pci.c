@@ -43,7 +43,7 @@ void pci_enumerate_device(uint16_t device, pci_device_enumerator enumerator) {
     uint8_t bus = pci_read_config_byte(device, 0x19);
     pci_enumerate_bus(bus, enumerator);
   }
-  else enumerator(device, interface);
+  else enumerator(device, pci_read_config(device, 0), interface);
 }
 
 void pci_enumerate_slot(int bus, int slot, pci_device_enumerator enumerator) {
