@@ -11,6 +11,7 @@ void init_gdt(struct tss_struct* tss, uint32_t tss_limit) {
   GDT[USER_DATA_GDT_INDEX] = GDT_ENTRY(0, 0xFFFFF, 0xF2, 0xC);
   GDT[TSS_GDT_INDEX] = GDT_ENTRY((uint32_t)tss, tss_limit, 0x89, 0);
   GDT[LDT_GDT_INDEX] = GDT_ENTRY(-1, 0, 0, 0);
+  tss->ss0 = GDT2SEG(KERNEL_DATA_GDT_INDEX);
   lgdt(&GDT, sizeof(GDT) - 1);
   lcs(GDT2SEG(KERNEL_CODE_GDT_INDEX));
   lds(GDT2SEG(KERNEL_DATA_GDT_INDEX));

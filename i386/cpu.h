@@ -77,6 +77,9 @@ inline static void lgs(uint16_t gs) {
   asm volatile ("mov %w0, %%gs" : : "a"(gs));
 }
 
+size_t rdflags();
+void wrflags(size_t flags);
+
 #define cli() asm volatile ("cli")
 #define sti() asm volatile ("sti")
 

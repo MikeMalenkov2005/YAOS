@@ -1,9 +1,7 @@
 #ifndef TSS_H
 #define TSS_H
 
-#include <stdint.h>
-
-#include <attributes.h>
+#include <cpu.h>
 
 inline static void ltr(uint16_t selector) {
   asm volatile ("ltr %w0" : : "r"(selector));
@@ -39,5 +37,9 @@ struct tss_struct {
   uint16_t tflag;
   uint16_t iopb;
 };
+
+struct tss_struct* init_tss(struct interrupt_frame* root_frame);
+
+int is_root_frame(struct interrupt_frame* frame);
 
 #endif

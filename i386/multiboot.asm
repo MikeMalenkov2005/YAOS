@@ -20,13 +20,13 @@ _start:
   cld
   cmp eax, MB_BLMAG
   jne .halt
-  lea eax, [STACK.TOP]
-  mov esp, eax
-  push eax ; STACK TOP POINTER
+  lea esp, [STACK.TOP - 20]
+  mov eax, esp
   push ebx ; BOOT INFO POINTER
+  push eax ; ROOT FRAME POINTER
   call kinit
-  pop ebx
-  pop eax
+  add esp, 8
+  iret
 .halt:
   cli
   hlt

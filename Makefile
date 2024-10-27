@@ -2,7 +2,7 @@ B = build
 N = YAOS
 
 AS_i386 = nasm -f elf32
-CC_i386 = gcc -m32 -march=i386 -c -fno-pie -fno-stack-protector -fno-builtin -ffreestanding -I common
+CC_i386 = gcc -m32 -march=i386 -fcf-protection=branch -mmanual-endbr -c -fno-pie -fno-stack-protector -fno-builtin -ffreestanding -I common
 LD_i386 = ld -m elf_i386
 
 common_hdr = $(wildcard common/*.h)
@@ -30,6 +30,7 @@ fd1440.img: $N-i386.sys
 
 $N-i386.sys: i386/kernel.ld $(i386_obj)
 	$(LD_i386) -o $@ -T $^
+	strip --strip-unneeded $@
 
 $B/i386/asm/%.o: i386/%.asm
 	mkdir -p $(dir $@)
