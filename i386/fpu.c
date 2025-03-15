@@ -7,7 +7,7 @@ void fpu_exception_handler(struct isr_frame* frame) {
   /* TODO: not implemented */
 }
 
-int init_fpu(void) {
+bool init_fpu(void) {
   int no_fpu = 0x5A5A;
   wrcr0((rdcr0() & ~(size_t)0b1100) | 0b10);
   asm volatile ("fninit");

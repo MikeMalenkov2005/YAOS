@@ -2,6 +2,7 @@
 #define FPU_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #include <attributes.h>
 
@@ -22,7 +23,7 @@ struct fpu_state {
   struct fpu_float register_stack[8];
 }__packed;
 
-int init_fpu(void);
+bool init_fpu(void);
 
 void save_fpu(struct fpu_state* state);
 void load_fpu(struct fpu_state* state);

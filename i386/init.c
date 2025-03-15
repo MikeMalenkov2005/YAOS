@@ -3,6 +3,7 @@
 #include <cpu.h>
 #include <gdt.h>
 #include <idt.h>
+#include <pic.h>
 #include <pit.h>
 #include <fpu.h>
 #include <pci.h>
@@ -119,6 +120,12 @@ void __naked test() {
   asm volatile ("jmp %P0" : : "i"(test));
 }
 
+void key_test(struct irq_frame frame) {
+  static unsigned int scancode = 0;
+  scancode = (scancode << 8) | inb(0x60);
+  print_hex(20, 20, scancode, 2);
+}
+
 void kinit(struct interrupt_frame* frame, struct boot_info* info) {
   init_gdt(init_tss(frame), sizeof(struct tss_struct) - 1);
   init_idt(GDT2SEG(KERNEL_CODE_GDT_INDEX));
@@ -138,6 +145,9 @@ void kinit(struct interrupt_frame* frame, struct boot_info* info) {
   if (!init_fpu()) kernel_flags |= 1;
 
   pci_enumerate_devices(pci_device_installer);
+
+  set_pic_irqsr(1, key_test);
+  set_pic_mask(get_pic_mask() & ~2);
 
   int status = kmain();
 
