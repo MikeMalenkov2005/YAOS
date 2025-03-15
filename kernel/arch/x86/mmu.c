@@ -21,10 +21,10 @@ void SetMemoryMap(UINTPTR MemoryMap)
   asm volatile ("mov %0, %%cr3" : : "a"(MemoryMap) : "memory");
 }
 
-UINTPTR CreateMemoryMap()
+UINTPTR CreateMemoryMap(BOOL bShare)
 {
   /* TODO: Implement Memory Map Creation */
-  return 0;
+  return bShare ? 0 : 0;
 }
 
 UINTPTR GetPageMapping(UINTPTR VirtualPage)
@@ -38,6 +38,8 @@ UINTPTR GetPageMapping(UINTPTR VirtualPage)
   if (Page & PAGE_PRESENT_FLAG) Mapping |= MAPPING_PRESENT_BIT | MAPPING_READABLE_BIT | MAPPING_EXECUTABLE_BIT; /* Every Page is Readable and Executable on x86 */
   if (Page & PAGE_WRITABLE_FLAG) Mapping |= MAPPING_WRITABLE_BIT;
   if (Page & PAGE_USER_FLAG) Mapping |= MAPPING_USER_MODE_BIT;
+  if (Page & PAGE_GLOBAL_FLAG) Mapping |= MAPPING_GLOBAL_BIT;
+  if (Page & PAGE_LOCAL_FLAG) Mapping |= MAPPING_LOCAL_BIT;
   return Mapping;
 }
 
@@ -51,11 +53,13 @@ BOOL SetPageMapping(UINTPTR VirtualPage, UINTPTR Mapping)
   if (Mapping & MAPPING_PRESENT_BIT) Page |= PAGE_PRESENT_FLAG;
   if (Mapping & MAPPING_WRITABLE_BIT) Page |= PAGE_WRITABLE_FLAG;
   if (Mapping & MAPPING_USER_MODE_BIT) Page |= PAGE_USER_FLAG;
+  if (Mapping & MAPPING_GLOBAL_BIT) Page |= PAGE_GLOBAL_FLAG;
+  if (Mapping & MAPPING_LOCAL_BIT) Page |= PAGE_LOCAL_FLAG;
   if (!(pPageDirectory[TableIndex] & PAGE_PRESENT_FLAG))
   {
     /* Allocate an empty Page Table */
     if (!NextFreePage) return FALSE; /* Out of Free Memory */
-    pPageDirectory[TableIndex] = NextFreePage | PAGE_PRESENT_FLAG | PAGE_WRITABLE_FLAG | PAGE_USER_FLAG;
+    pPageDirectory[TableIndex] = NextFreePage | PAGE_PRESENT_FLAG | PAGE_WRITABLE_FLAG | PAGE_USER_FLAG | (Mapping & MAPPING_LOCAL_BIT ? PAGE_LOCAL_FLAG : 0);
     NextFreePage = pPageTable[TableIndex * PAGE_TABLE_SIZE];
     for (UINTPTR i = 0; i < PAGE_TABLE_SIZE; ++i) pPageTable[TableIndex * PAGE_TABLE_SIZE + i] = 0;
   }
@@ -72,7 +76,7 @@ BOOL SetPageMapping(UINTPTR VirtualPage, UINTPTR Mapping)
   return TRUE;
 }
 
-BOOL MapFreePage(UINTPTR VirtualPage, int MappingFlags)
+BOOL MapFreePage(UINTPTR VirtualPage, UINT MappingFlags)
 {
   UINTPTR PreviousMapping = GetPageMapping(VirtualPage);
   if (PreviousMapping || !SetPageMapping(VirtualPage, MAPPING_PRESENT_BIT)) return FALSE; /* The Page is already Mapped or is unable to be Mapped */
@@ -81,7 +85,7 @@ BOOL MapFreePage(UINTPTR VirtualPage, int MappingFlags)
     (void)SetPageMapping(VirtualPage, PreviousMapping); /* Can NOT fail */
     return FALSE;
   }
-  (void)SetPageMapping(VirtualPage, NextFreePage | (MappingFlags & PAGE_FLAGS_MASK) | PAGE_PRESENT_FLAG); /* Can NOT fail */
+  (void)SetPageMapping(VirtualPage, NextFreePage | (MappingFlags & PAGE_FLAGS_MASK) | MAPPING_PRESENT_BIT); /* Can NOT fail */
   NextFreePage = *(UINTPTR*)(void*)VirtualPage;
   return TRUE;
 }
@@ -107,7 +111,7 @@ void InitMMU(UINTPTR FreePageList)
   pSystemPageDirectory[PAGE_TABLE_SIZE - 1] = (UINTPTR)pSystemPageDirectory | PAGE_PRESENT_FLAG | PAGE_WRITABLE_FLAG;
   /* Fill the System Page Directory and Tables */
   UINTPTR *pSystemPageTable;
-  for (UINTPTR SystemPage = PAGE_PRESENT_FLAG | PAGE_WRITABLE_FLAG; SystemPage < (UINTPTR)&__end; SystemPage += PAGE_SIZE)
+  for (UINTPTR SystemPage = PAGE_PRESENT_FLAG | PAGE_WRITABLE_FLAG | PAGE_GLOBAL_FLAG; SystemPage < (UINTPTR)&__end; SystemPage += PAGE_SIZE)
   {
     UINTPTR PageIndex = SystemPage >> PAGE_SHIFT;
     UINTPTR PageTableIndex = PageIndex % PAGE_TABLE_SIZE;
@@ -123,8 +127,8 @@ void InitMMU(UINTPTR FreePageList)
     pSystemPageTable[PageTableIndex] = SystemPage;
   }
   /* Enable Paging */
-  UINT32 CR3;
+  UINT32 CR0;
   asm volatile ("mov %0, %%cr3" : : "a"(pSystemPageDirectory) : "memory");
-  asm volatile ("mov %%cr0, %0" : "=a"(CR3));
-  asm volatile ("mov %0, %%cr0" : : "a"(CR3 | 0x80000001U));
+  asm volatile ("mov %%cr0, %0" : "=a"(CR0));
+  asm volatile ("mov %0, %%cr0" : : "a"(CR0 | 0x80000001U));
 }

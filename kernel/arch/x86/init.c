@@ -1,5 +1,6 @@
 #include <kernel/arch/x86/init.h>
 #include <kernel/arch/x86/mmu.h>
+#include <kernel/arch/x86/fpu.h>
 #include <kernel/arch/x86/dt.h>
 #include <kernel/timer.h>
 #include <kernel/panic.h>
@@ -59,8 +60,9 @@ void InitArch(UINT32 BootMagic, BOOT_INFO *pBootInfo, UINT32 SystemStack)
     }
   }
   InitMMU(FreePageList);
+  InitFPU();
   InitTimer();
-  SetTaskLimit(1024);
+  InitTaskSlots(1024);
   KernelPanic("INIT END");
   /* TODO: Laod Modules and jump to User Mode */
   InitEnd();

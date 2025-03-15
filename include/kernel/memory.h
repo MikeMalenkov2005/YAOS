@@ -15,24 +15,27 @@ UINTPTR GetMemoryMap();
 
 void SetMemoryMap(UINTPTR MemoryMap);
 
-UINTPTR CreateMemoryMap();
+UINTPTR CreateMemoryMap(BOOL bShare);
 
 #define MAPPING_PRESENT_BIT     (1 << 0)
 #define MAPPING_READABLE_BIT    (1 << 1)
 #define MAPPING_WRITABLE_BIT    (1 << 2)
 #define MAPPING_EXECUTABLE_BIT  (1 << 3)
 #define MAPPING_USER_MODE_BIT   (1 << 4)
+#define MAPPING_GLOBAL_BIT      (1 << 5)
+#define MAPPING_LOCAL_BIT       (1 << 6)
+#define MAPPING_EXTERNAL_BIT    (1 << 7)
 
 UINTPTR GetPageMapping(UINTPTR VirtualPage);
 
 BOOL SetPageMapping(UINTPTR VirtualPage, UINTPTR Mapping);
 
-BOOL MapFreePage(UINTPTR VirtualPage, int MappingFlags);
+BOOL MapFreePage(UINTPTR VirtualPage, UINT MappingFlags);
 
 BOOL FreeMappedPage(UINTPTR VirtualPage);
 
 UINTPTR FindFirstFreeVirtualPages(SIZE_T PageCount);
 
-void *MapFirstFreePages(SIZE_T PageCount, int MappingFlags);
+void *MapFirstFreePages(SIZE_T PageCount, UINT MappingFlags);
 
 #endif

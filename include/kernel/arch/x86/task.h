@@ -2,19 +2,20 @@
 #define KERNEL_ARCH_X86_TASK_H
 
 #include <kernel/arch/x86/isr.h>
+#include <kernel/arch/x86/fpu.h>
 #include <kernel/task.h>
 
-typedef struct TASK_DATA
+typedef struct TASK_CONTEXT
 {
-  UINTPTR MemoryMap;
-  UINTPTR NextTask;
-  UINTPTR PrevTask;
-  TASK_MESSAGE InMessage;
-  TASK_MESSAGE OutMessage;
   INTERRUPT_FRAME Frame;
-  UINT32 Flags;
-  int TaskID;
-} TASK_DATA;
+  FPU_STATE FPUState;
+} TASK_CONTEXT;
+
+typedef struct TASK_SLOT
+{
+  TASK Task;
+  TASK_CONTEXT *pContext;
+} TASK_SLOT;
 
 void SaveTaskFrame(INTERRUPT_FRAME *pFrame);
 

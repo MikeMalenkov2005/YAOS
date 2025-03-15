@@ -14,9 +14,8 @@
 #define PAGE_DIRTY_FLAG           (1 << 6)
 #define PAGE_ATTRIBUTE_TABLE_FLAG (1 << 7)
 #define PAGE_GLOBAL_FLAG          (1 << 8)
-
-// #define PAGE_SHARING_MODE_SHIFT 9
-// #define PAGE_SHARING_MODE_MASK  (3 << PAGE_SHARING_MODE_SHIFT)
+#define PAGE_LOCAL_FLAG           (1 << 9)
+#define PAGE_EXTERNAL_FLAG        (1 << 10)
 
 void InitMMU(UINTPTR FreePageList);
 

@@ -22,7 +22,7 @@ UINTPTR FindFirstFreeVirtualPages(SIZE_T PageCount)
   return FirstPage;
 }
 
-void *MapFirstFreePages(SIZE_T PageCount, int MappingFlags)
+void *MapFirstFreePages(SIZE_T PageCount, UINT MappingFlags)
 {
   UINTPTR FirstPage = FindFirstFreeVirtualPages(PageCount);
   if (FirstPage)
