@@ -1,3 +1,0 @@
-[submodule "boot/minboot"]
-	path = boot/minboot
-	url = https://github.com/MikeMalenkov2005/minboot.git

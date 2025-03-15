@@ -1,0 +1,26 @@
+#ifndef KERNEL_ARCH_X86_ISR_H
+#define KERNEL_ARCH_X86_ISR_H
+
+#include <types.h>
+
+typedef struct INTERRUPT_FRAME
+{
+  UINT32 DS;
+  UINT32 EDI;
+  UINT32 ESI;
+  UINT32 EBP;
+  UINT32 Reserved;
+  UINT32 EBX;
+  UINT32 EDX;
+  UINT32 ECX;
+  UINT32 EAX;
+  UINT32 ISRIndex;
+  UINT32 ErrorCode;
+  UINT32 EIP;
+  UINT32 CS;
+  UINT32 EFLAGS;
+  UINT32 ESP;
+  UINT32 SS;
+} INTERRUPT_FRAME;
+
+#endif
