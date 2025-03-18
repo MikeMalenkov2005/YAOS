@@ -17,6 +17,8 @@ void SetMemoryMap(UINTPTR MemoryMap);
 
 UINTPTR CreateMemoryMap(BOOL bShare);
 
+BOOL DeleteMemoryMap(UINTPTR MemoryMap);
+
 #define MAPPING_PRESENT_BIT     (1 << 0)
 #define MAPPING_READABLE_BIT    (1 << 1)
 #define MAPPING_WRITABLE_BIT    (1 << 2)

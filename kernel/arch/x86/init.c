@@ -42,7 +42,7 @@ void InitArch(UINT32 BootMagic, BOOT_INFO *pBootInfo, UINT32 SystemStack)
   InitIDT();
   /* Get Loaded Moduler (if any) */
   UINT32 ModulesCount = pBootInfo->Flags & BOOT_INFO_MODULES_FLAG ? pBootInfo->ModulesCount : 0;
-  MODULE_INFO *Modules = pBootInfo->Flags & BOOT_INFO_MODULES_FLAG ? (void*)pBootInfo->ModulesAddress : NULL;
+  MODULE_INFO *Modules = pBootInfo->Flags & BOOT_INFO_MODULES_FLAG ? (void*)(UINTPTR)pBootInfo->ModulesAddress : NULL;
   /* Create a Linked List of Free Pages */
   UINTPTR FreePageList = 0;
   UINTPTR MemorySize = PAGE_ROUND_DOWN(0x100000 + (pBootInfo->UpperMemory << 10));
@@ -62,7 +62,7 @@ void InitArch(UINT32 BootMagic, BOOT_INFO *pBootInfo, UINT32 SystemStack)
   InitMMU(FreePageList);
   InitFPU();
   InitTimer();
-  InitTaskSlots(1024);
+  InitTasks();
   KernelPanic("INIT END");
   /* TODO: Laod Modules and jump to User Mode */
   InitEnd();

@@ -6,34 +6,48 @@
 #define TASK_LEADER_BIT (1 << 0)
 #define TASK_MODULE_BIT (1 << 1)
 
-typedef struct TASK
+/* Can be changed with a compiler options */
+#ifndef TASK_LIMIT
+#define TASK_LIMIT 1024
+#endif
+
+typedef struct TASK_CONTEXT TASK_CONTEXT;
+
+typedef struct TASK TASK;
+
+/* All fields are READONLY for other kernel parts!
+ * Changing any field WILL messup everything! */
+struct TASK
 {
   UINTPTR MemoryMap;
-  UINTPTR NextInLine;
-  UINTPTR NextInGroup;
-  UINTPTR FirstSender;
-  UINTPTR Message;
-  UINTPTR Parent;
+  TASK_CONTEXT *pContext;
+  const TASK *pNext;
+  const TASK *pPrevious;
+  const TASK *pSenderList;
+  const TASK *pMessage;
+  UINT ParentID;
+  UINT GroupID;
+  UINT TaskID;
   UINT Flags;
-  int GroupID;
-  int TaskID;
-} TASK;
+};
 
-void InitTaskSlots(UINTPTR MaxTaskCount);
+void InitTasks();
 
-UINTPTR GetCurrentTask();
+const TASK *GetTaskByID(UINT TaskID);
 
-int GetTaskID(UINTPTR Task);
+const TASK *GetTaskGroupLeader(UINT GroupID);
 
-UINTPTR GetTaskByID(int TaskID);
+TASK_CONTEXT *CreateTaskContext();
 
-int GetTaskGroupID(UINTPTR Task);
+void SaveTaskContext(TASK_CONTEXT *pContext);
 
-UINTPTR GetTaskGroupLeader(int GroupID);
+void LoadTaskContext(TASK_CONTEXT *pContext);
 
-UINTPTR CreateTask(UINT Flags);
+const TASK *GetCurrentTask();
 
-void DeleteTask(UINTPTR Task);
+const TASK *CreateTask(UINT Flags);
+
+BOOL DeleteTask(const TASK *pTask);
 
 void SwitchTask();
 

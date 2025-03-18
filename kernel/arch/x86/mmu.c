@@ -27,6 +27,14 @@ UINTPTR CreateMemoryMap(BOOL bShare)
   return bShare ? 0 : 0;
 }
 
+BOOL DeleteMemoryMap(UINTPTR MemoryMap)
+{
+  UINTPTR CurrentMap = GetMemoryMap();
+  if (MemoryMap == CurrentMap) return FALSE;
+  /* TODO: Implement Memory Map Creation */
+  return FALSE;
+}
+
 UINTPTR GetPageMapping(UINTPTR VirtualPage)
 {
   UINTPTR PageIndex = VirtualPage >> PAGE_SHIFT;

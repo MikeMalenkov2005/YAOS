@@ -5,17 +5,11 @@
 #include <kernel/arch/x86/fpu.h>
 #include <kernel/task.h>
 
-typedef struct TASK_CONTEXT
+struct TASK_CONTEXT
 {
   INTERRUPT_FRAME Frame;
   FPU_STATE FPUState;
-} TASK_CONTEXT;
-
-typedef struct TASK_SLOT
-{
-  TASK Task;
-  TASK_CONTEXT *pContext;
-} TASK_SLOT;
+};
 
 void SaveTaskFrame(INTERRUPT_FRAME *pFrame);
 

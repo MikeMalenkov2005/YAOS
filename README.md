@@ -34,3 +34,12 @@ For building to be successful every tool listed above must be added to PATH.
 The `make` command builds everything required for the current target.
 The `make clean` command deletes everything created during the build process.
 
+TODO List
+---------
+
+- Implement `CreateMemoryMap` in `kernel/arch/x86/mmu.c`
+- Implement `DeleteMemoryMap` in `kernel/arch/x86/mmu.c`
+- Implement `CreateTaskContext` in `kernel/arch/x86/task.c`
+- Implement `InitEnd` in `kernel/arch/x86/init.c`
+- Finalize `InitArch` in `kernel/arch/x86/init.c`
+
