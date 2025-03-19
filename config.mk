@@ -4,10 +4,10 @@ ARCH = x86
 
 KERNEL_NAME = YAOS
 KERNEL_VERSION = 0.1
+KERNEL = $(KERNEL_NAME)-$(KERNEL_VERSION)
+KERNEL_FILE = $(ROOTDIR)/$(KERNEL).sys
 
-KERNEL = $(ROOTDIR)/$(KERNEL_NAME)-$(KERNEL_VERSION)
-
-IDLEMOD = $(ROOTDIR)/idle.mod
+MODULES = idle
 
 #### PROJECT FILES ####
 
@@ -25,3 +25,6 @@ LD = ld.lld
 #### TARGET SPECIFIC ####
 
 include $(ROOTDIR)/config/$(ARCH).mk
+
+MODULE_FILES = $(patsubst %,$(ROOTDIR)/%.sys,$(MODULES))
+

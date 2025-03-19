@@ -102,7 +102,7 @@ BOOL DeleteTask(const TASK *pTask)
     }
     if (pTaskToDelete == pCurrentTask) return FALSE;
   }
-  if (!DeleteMemoryMap(pTaskToDelete->MemoryMap)) return FALSE;
+  if (!DeleteMemoryMap(pTaskToDelete->MemoryMap, (pTaskToDelete->Flags & TASK_LEADER_BIT))) return FALSE;
   ((TASK*)pTaskToDelete->pPrevious)->pNext = pTaskToDelete->pNext;
   ((TASK*)pTaskToDelete->pNext)->pPrevious = pTaskToDelete->pPrevious;
   pTaskToDelete->MemoryMap = 0;

@@ -38,8 +38,7 @@ TODO List
 ---------
 
 - Implement `CreateMemoryMap` in `kernel/arch/x86/mmu.c`
-- Implement `DeleteMemoryMap` in `kernel/arch/x86/mmu.c`
-- Implement `CreateTaskContext` in `kernel/arch/x86/task.c`
 - Implement `InitEnd` in `kernel/arch/x86/init.c`
 - Finalize `InitArch` in `kernel/arch/x86/init.c`
+- Improve memory API in `kernel/memory.c`
 

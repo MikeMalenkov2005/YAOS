@@ -16,4 +16,4 @@ clean:
 	$(MAKE) -C modules clean
 	$(MAKE) -C kernel clean
 	$(MAKE) -C boot/$(ARCH) clean
-	rm -f $(KERNEL) *.mod *.iso *.img
+	rm -f *.sys *.iso *.img

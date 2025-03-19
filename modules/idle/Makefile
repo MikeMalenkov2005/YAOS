@@ -3,7 +3,7 @@ include $(ROOTDIR)/config.mk
 
 .PHONY: clean
 
-$(IDLEMOD): $(OBJECTS)
+$(ROOTDIR)/idle.sys: $(OBJECTS)
 	$(LD) $(LDFLAGS) -o $@ $^
 
 $(OBJECTS): %.o: %.c

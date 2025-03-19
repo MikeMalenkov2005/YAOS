@@ -1,9 +1,7 @@
 compile_flags.txt
 .vscode/
-YAOS-*
 *.iso
 *.sys
 *.img
-*.mod
 *.o
 

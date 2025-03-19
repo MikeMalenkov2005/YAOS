@@ -16,6 +16,7 @@
 #define PAGE_GLOBAL_FLAG          (1 << 8)
 #define PAGE_LOCAL_FLAG           (1 << 9)
 #define PAGE_EXTERNAL_FLAG        (1 << 10)
+#define PAGE_GRANT_FLAG           (1 << 11)
 
 void InitMMU(UINTPTR FreePageList);
 

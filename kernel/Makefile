@@ -9,7 +9,7 @@ ASMOBJ = $(patsubst %.asm,%.o,$(ASMSRC))
 
 .PHONY: clean
 
-$(KERNEL): $(OBJECTS) $(ASMOBJ)
+$(KERNEL_FILE): $(OBJECTS) $(ASMOBJ)
 	$(LD) $(LDFLAGS) -o $@ $^
 
 $(OBJECTS): %.o: %.c

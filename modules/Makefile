@@ -1,4 +1,6 @@
-MODULES = idle
+ROOTDIR = ..
+include $(ROOTDIR)/config.mk
+
 CLEANS = $(patsubst %,%.clean,$(MODULES))
 
 .PHONY: all $(MODULES) clean $(CLEANS)

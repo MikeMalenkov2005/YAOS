@@ -3,20 +3,20 @@ include $(ROOTDIR)/config.mk
 
 GRUBIMG = grub.img
 GRUBCFG = grub.cfg
-MODULES = biosdisk part_msdos fat multiboot configfile ls cat help
+GRUBMOD = biosdisk part_msdos fat multiboot configfile ls cat help
 
 FLOPPY = floppy.img
 
 .PHONY: clean
 
-# all: $(KERNEL).img $(KERNEL).iso
+# all: $(ROOTDIR)/$(KERNEL).img $(ROOTDIR)/$(KERNEL).iso
 
-# $(KERNEL).iso: $(KERNEL)
+# $(ROOTDIR)/$(KERNEL).iso: $(KERNEL_FILE)
 
-$(KERNEL).img: $(KERNEL) $(FLOPPY) $(IDLEMOD)
+$(ROOTDIR)/$(KERNEL).img: $(KERNEL_FILE) $(FLOPPY) $(MODULE_FILES)
 	cp $(FLOPPY) $@
-	mcopy -i $@ $(KERNEL) ::/YAOS.SYS
-	mcopy -i $@ $(IDLEMOD) ::/IDLE.MOD
+	mcopy -i $@ $(KERNEL_FILE) ::/YAOS.SYS
+	mcopy -i $@ $(MODULE_FILES) ::/
 
 $(FLOPPY): $(GRUBIMG) $(GRUBCFG)
 	dd if=/dev/zero of=$@ bs=512 count=2880
@@ -26,7 +26,7 @@ $(FLOPPY): $(GRUBIMG) $(GRUBCFG)
 	mcopy -i $@ $(GRUBCFG) ::/GRUB.CFG
 
 $(GRUBIMG):
-	grub-mkimage -p / -C auto -O i386-pc -o $@ $(MODULES)
+	grub-mkimage -p / -C auto -O i386-pc -o $@ $(GRUBMOD)
 
 clean:
 	rm -f $(GRUBIMG)

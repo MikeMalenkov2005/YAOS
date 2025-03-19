@@ -17,7 +17,7 @@ void SetMemoryMap(UINTPTR MemoryMap);
 
 UINTPTR CreateMemoryMap(BOOL bShare);
 
-BOOL DeleteMemoryMap(UINTPTR MemoryMap);
+BOOL DeleteMemoryMap(UINTPTR MemoryMap, BOOL bFreeShared);
 
 #define MAPPING_PRESENT_BIT     (1 << 0)
 #define MAPPING_READABLE_BIT    (1 << 1)
@@ -27,6 +27,7 @@ BOOL DeleteMemoryMap(UINTPTR MemoryMap);
 #define MAPPING_GLOBAL_BIT      (1 << 5)
 #define MAPPING_LOCAL_BIT       (1 << 6)
 #define MAPPING_EXTERNAL_BIT    (1 << 7)
+#define MAPPING_GRANT_BIT       (1 << 8) /* Used for granting ownership to a newly created Task */
 
 UINTPTR GetPageMapping(UINTPTR VirtualPage);
 
@@ -38,6 +39,14 @@ BOOL FreeMappedPage(UINTPTR VirtualPage);
 
 UINTPTR FindFirstFreeVirtualPages(SIZE_T PageCount);
 
+UINTPTR FindLastFreeVirtualPages(SIZE_T PageCount);
+
+UINTPTR FindBestFreeVirtualPages(SIZE_T PageCount);
+
 void *MapFirstFreePages(SIZE_T PageCount, UINT MappingFlags);
+
+void *MapLastFreePages(SIZE_T PageCount, UINT MappingFlags);
+
+void *MapBestFreePages(SIZE_T PageCount, UINT MappingFlags);
 
 #endif
