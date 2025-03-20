@@ -1,4 +1,4 @@
-CFLAGS += -target i386-pc-none-elf
+CFLAGS += -target i686-pc-none-elf
 LDFLAGS = -m elf_i386
 
 ELFASM = nasm -f elf32

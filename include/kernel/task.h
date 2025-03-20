@@ -3,8 +3,9 @@
 
 #include <types.h>
 
-#define TASK_LEADER_BIT (1 << 0)
-#define TASK_MODULE_BIT (1 << 1)
+#define INVALID_TASK_ID (~(UINT)0)
+
+#define TASK_MODULE_BIT (1 << 0)
 
 /* Can be changed with a compiler options */
 #ifndef TASK_LIMIT
@@ -26,7 +27,6 @@ struct TASK
   const TASK *pSenderList;
   const TASK *pMessage;
   UINT ParentID;
-  UINT GroupID;
   UINT TaskID;
   UINT Flags;
 };
@@ -34,8 +34,6 @@ struct TASK
 void InitTasks();
 
 const TASK *GetTaskByID(UINT TaskID);
-
-const TASK *GetTaskGroupLeader(UINT GroupID);
 
 TASK_CONTEXT *CreateTaskContext();
 

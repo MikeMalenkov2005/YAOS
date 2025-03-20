@@ -15,9 +15,11 @@ UINTPTR GetMemoryMap();
 
 void SetMemoryMap(UINTPTR MemoryMap);
 
-UINTPTR CreateMemoryMap(BOOL bShare);
+UINTPTR CreateMemoryMap();
 
-BOOL DeleteMemoryMap(UINTPTR MemoryMap, BOOL bFreeShared);
+BOOL DeleteMemoryMap(UINTPTR MemoryMap);
+
+void InvalidatePage(UINTPTR VirtualPage);
 
 #define MAPPING_PRESENT_BIT     (1 << 0)
 #define MAPPING_READABLE_BIT    (1 << 1)
@@ -25,9 +27,7 @@ BOOL DeleteMemoryMap(UINTPTR MemoryMap, BOOL bFreeShared);
 #define MAPPING_EXECUTABLE_BIT  (1 << 3)
 #define MAPPING_USER_MODE_BIT   (1 << 4)
 #define MAPPING_GLOBAL_BIT      (1 << 5)
-#define MAPPING_LOCAL_BIT       (1 << 6)
-#define MAPPING_EXTERNAL_BIT    (1 << 7)
-#define MAPPING_GRANT_BIT       (1 << 8) /* Used for granting ownership to a newly created Task */
+#define MAPPING_EXTERNAL_BIT    (1 << 6)
 
 UINTPTR GetPageMapping(UINTPTR VirtualPage);
 

@@ -5,7 +5,7 @@ static UINT LastSavedTaskID;
 
 TASK_CONTEXT *CreateTaskContext()
 {
-  return MapLastFreePages(sizeof(TASK_CONTEXT) / PAGE_SIZE, MAPPING_LOCAL_BIT | MAPPING_WRITABLE_BIT | MAPPING_READABLE_BIT);
+  return MapLastFreePages(sizeof(TASK_CONTEXT) / PAGE_SIZE, MAPPING_WRITABLE_BIT | MAPPING_READABLE_BIT);
 }
 
 void SaveTaskContext(TASK_CONTEXT *pContext)
