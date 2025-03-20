@@ -37,7 +37,6 @@ The `make clean` command deletes everything created during the build process.
 TODO List
 ---------
 
-- Implement `CreateMemoryMap` in `kernel/arch/x86/mmu.c`
 - Implement `InitEnd` in `kernel/arch/x86/init.c`
 - Finalize `InitArch` in `kernel/arch/x86/init.c`
 - Improve memory API in `kernel/memory.c`

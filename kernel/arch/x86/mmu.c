@@ -24,31 +24,39 @@ void SetMemoryMap(UINTPTR MemoryMap)
 
 UINTPTR CreateMemoryMap()
 {
-  /* TODO: Implement Memory Map Creation */
-  KernelPanic("NO IMPL");
   UINTPTR VirtualPages = FindLastFreeVirtualPages(2);
   if (!MapFreePage(VirtualPages + PAGE_SIZE, MAPPING_WRITABLE_BIT | MAPPING_READABLE_BIT)) return 0;
   UINTPTR *pNewDirectory = (void*)(VirtualPages + PAGE_SIZE);
   pNewDirectory[PAGE_TABLE_SIZE - 1] = pPageTable[(VirtualPages >> PAGE_SHIFT) + 1];
+  UINTPTR MemoryMap = pNewDirectory[PAGE_TABLE_SIZE - 1] & PAGE_ADDRESS_MASK;
   UINTPTR *pNewTable = (void*)VirtualPages;
+  BOOL bNeedNewTable = FALSE;
   for (UINTPTR VirtualPage = 0; VirtualPage < (UINTPTR)(void*)pPageTable; VirtualPage += PAGE_SIZE)
   {
     UINTPTR PageIndex = VirtualPage >> PAGE_SHIFT;
     UINTPTR TableIndex = PageIndex / PAGE_TABLE_SIZE;
     UINTPTR LocalPageIndex = PageIndex % PAGE_TABLE_SIZE;
     UINTPTR Page = pPageDirectory[TableIndex] & PAGE_PRESENT_FLAG ? pPageTable[PageIndex] : 0;
-    if (!TableIndex)
+    if (!LocalPageIndex) bNeedNewTable = TRUE;
+    if (Page & (PAGE_GLOBAL_FLAG | PAGE_EXTERNAL_FLAG))
     {
-      (void)SetPageMapping(VirtualPages, 0);
-      if (!MapFreePage(VirtualPages, MAPPING_WRITABLE_BIT | MAPPING_READABLE_BIT | MAPPING_USER_MODE_BIT))
+      if (bNeedNewTable)
       {
-        /* TODO: Handle Error */
+        (void)SetPageMapping(VirtualPages, 0);
+        if (!MapFreePage(VirtualPages, MAPPING_WRITABLE_BIT | MAPPING_READABLE_BIT | MAPPING_USER_MODE_BIT))
+        {
+          (void)DeleteMemoryMap(MemoryMap);
+          return 0;
+        }
+        pNewDirectory[TableIndex] = pPageTable[VirtualPages >> PAGE_SHIFT];
+        bNeedNewTable = FALSE;
       }
-      pNewDirectory[TableIndex] = pPageTable[VirtualPages >> PAGE_SHIFT];
+      pNewTable[LocalPageIndex] = Page;
     }
-    pNewTable[LocalPageIndex] = Page;
   }
-  return 0;
+  (void)SetPageMapping(VirtualPages + PAGE_SIZE, 0);
+  (void)SetPageMapping(VirtualPages, 0);
+  return MemoryMap;
 }
 
 BOOL DeleteMemoryMap(UINTPTR MemoryMap)
