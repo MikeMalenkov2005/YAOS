@@ -1,39 +1,39 @@
 #include <kernel/arch/x86/task.h>
 #include <kernel/memory.h>
 
-static UINT LastSavedTaskID;
+static INTERRUPT_FRAME *pTaskFrame;
 
 TASK_CONTEXT *CreateTaskContext()
 {
-  return MapLastFreePages(sizeof(TASK_CONTEXT) / PAGE_SIZE, MAPPING_WRITABLE_BIT | MAPPING_READABLE_BIT);
+  TASK_CONTEXT *pContext = MapLastFreePages(PAGE_ROUND_UP(sizeof(TASK_CONTEXT)) / PAGE_SIZE, MAPPING_WRITABLE_BIT | MAPPING_READABLE_BIT);
+  return pContext;
+}
+
+void DeleteTaskContext(TASK_CONTEXT *pContext)
+{
+  (void)FreeMappedPages((UINTPTR)pContext, PAGE_ROUND_UP(sizeof(TASK_CONTEXT)) / PAGE_SIZE);
 }
 
 void SaveTaskContext(TASK_CONTEXT *pContext)
 {
-  if (pContext) SaveFPU(&pContext->FPUState);
+  if (pContext)
+  {
+    SaveFPU(&pContext->FPUState);
+    pContext->Frame = *pTaskFrame;
+  }
 }
 
 void LoadTaskContext(TASK_CONTEXT *pContext)
 {
-  if (pContext) LoadFPU(&pContext->FPUState);
-}
-
-void SaveTaskFrame(INTERRUPT_FRAME *pFrame)
-{
-  const TASK *pCurrentTask = GetCurrentTask();
-  if (pCurrentTask)
+  if (pContext)
   {
-    LastSavedTaskID = pCurrentTask->TaskID;
-    pCurrentTask->pContext->Frame = *pFrame;
+    LoadFPU(&pContext->FPUState);
+    *pTaskFrame = pContext->Frame;
   }
 }
 
-void LoadTaskFrame(INTERRUPT_FRAME *pFrame)
+void SetTaskFrame(INTERRUPT_FRAME *pFrame)
 {
-  const TASK *pCurrentTask = GetCurrentTask();
-  if (pCurrentTask && LastSavedTaskID != pCurrentTask->TaskID)
-  {
-    *pFrame = pCurrentTask->pContext->Frame;
-  }
+  pTaskFrame = pFrame;
 }
 

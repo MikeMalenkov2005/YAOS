@@ -11,10 +11,11 @@ void InitTasks()
   {
     /* Just to make sure */
     Tasks[i].MemoryMap = 0;
-    Tasks[i].pContext = NULL;
     Tasks[i].pNext = NULL;
-    Tasks[i].pSenderList = NULL;
-    Tasks[i].pMessage = NULL;
+    Tasks[i].pPrevious = NULL;
+    Tasks[i].pContext = NULL;
+    Tasks[i].pMessageQueue = NULL;
+    Tasks[i].WaitInfo = 0;
     Tasks[i].ParentID = INVALID_TASK_ID;
     Tasks[i].TaskID = INVALID_TASK_ID;
     Tasks[i].Flags = 0;
@@ -39,9 +40,9 @@ const TASK *GetCurrentTask()
 const TASK *CreateTask(UINT Flags)
 {
   TASK *pTask = NULL;
-  for (UINT i = 0; i < TASK_LIMIT && ~NextTaskID; ++i)
+  for (UINT i = 0; i < TASK_LIMIT && NextTaskID != INVALID_TASK_ID; ++i)
   {
-    if (!~Tasks[i].TaskID)
+    if (Tasks[i].TaskID == INVALID_TASK_ID)
     {
       pTask = &Tasks[i];
       break;
@@ -61,11 +62,16 @@ const TASK *CreateTask(UINT Flags)
     else
     {
       pTask->MemoryMap = GetMemoryMap();
-      pTask->pContext = CreateTaskContext();
       pTask->pNext = pTask;
       pTask->pPrevious = pTask;
       pCurrentTask = pTask;
     }
+    UINTPTR MemoryMap = GetMemoryMap();
+    if (MemoryMap != pTask->MemoryMap) SetMemoryMap(pTask->MemoryMap);
+    pTask->pContext = CreateTaskContext();
+    pTask->pMessageQueue = CreateMessageQueue();
+    /* TODO: Initialize Task Memory */
+    if (MemoryMap != pTask->MemoryMap) SetMemoryMap(MemoryMap);
     pTask->TaskID = NextTaskID++;
     pTask->Flags = Flags;
   }
@@ -82,11 +88,11 @@ BOOL DeleteTask(const TASK *pTask)
   ((TASK*)pTaskToDelete->pPrevious)->pNext = pTaskToDelete->pNext;
   ((TASK*)pTaskToDelete->pNext)->pPrevious = pTaskToDelete->pPrevious;
   pTaskToDelete->MemoryMap = 0;
-  pTaskToDelete->pContext = NULL;
   pTaskToDelete->pNext = NULL;
   pTaskToDelete->pPrevious = NULL;
-  pTaskToDelete->pSenderList = NULL;
-  pTaskToDelete->pMessage = NULL;
+  pTaskToDelete->pContext = NULL;
+  pTaskToDelete->pMessageQueue = NULL;
+  pTaskToDelete->WaitInfo = 0;
   pTaskToDelete->ParentID = INVALID_TASK_ID;
   pTaskToDelete->TaskID = INVALID_TASK_ID;
   pTaskToDelete->Flags = 0;
@@ -95,13 +101,51 @@ BOOL DeleteTask(const TASK *pTask)
 
 void SwitchTask()
 {
-  if (pCurrentTask)
+  if (pCurrentTask && pCurrentTask->pNext != pCurrentTask)
   {
     LoadTaskContext(pCurrentTask->pContext);
-    pCurrentTask = (TASK*)pCurrentTask->pNext;
-    SetMemoryMap(pCurrentTask->MemoryMap);
-    if (!pCurrentTask->pContext) pCurrentTask->pContext = CreateTaskContext();
+    do
+    {
+      pCurrentTask = (TASK*)pCurrentTask->pNext;
+      SetMemoryMap(pCurrentTask->MemoryMap);
+      if (pCurrentTask->WaitInfo)
+      {
+        /* TODO: Handle different types of waiting */
+        if (ReceiveTaskMessage((void*)pCurrentTask->WaitInfo, FALSE)) pCurrentTask->WaitInfo = 0;
+      }
+    } while (pCurrentTask->WaitInfo);
     LoadTaskContext(pCurrentTask->pContext);
   }
+}
+
+BOOL SendTaskMessage(MESSAGE *pMessage)
+{
+  TASK *pTargetTask = (TASK*)GetTaskByID(pMessage->ReceiverID);
+  if (!pCurrentTask || !pTargetTask) return FALSE;
+  UINTPTR MemoryMap = GetMemoryMap();
+  if (pTargetTask->MemoryMap != MemoryMap) SetMemoryMap(pTargetTask->MemoryMap);
+  BOOL bResult = PushMessage((MESSAGE_QUEUE*)pTargetTask->pMessageQueue, pMessage);
+  if (pTargetTask->MemoryMap != MemoryMap) SetMemoryMap(MemoryMap);
+  return bResult;
+}
+
+BOOL PeekTaskMessage(MESSAGE *pMessage)
+{
+  if (!pCurrentTask) return FALSE;
+  return PeekMessage((MESSAGE_QUEUE*)pCurrentTask->pMessageQueue, pMessage);
+}
+
+BOOL ReceiveTaskMessage(MESSAGE *pMessage, BOOL bWait)
+{
+  if (!pCurrentTask) return FALSE;
+  if (!PollMessage((MESSAGE_QUEUE*)pCurrentTask->pMessageQueue, pMessage))
+  {
+    if (!bWait) return FALSE;
+    TASK *pWaitingTask = pCurrentTask;
+    SwitchTask();
+    if (pCurrentTask == pWaitingTask) return FALSE;
+    pWaitingTask->WaitInfo = (UINTPTR)(void*)pMessage;
+  }
+  return TRUE;
 }
 

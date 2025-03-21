@@ -1,11 +1,11 @@
 #ifndef KERNEL_TASK_H
 #define KERNEL_TASK_H
 
-#include <types.h>
+#include <kernel/message.h>
 
 #define INVALID_TASK_ID (~(UINT)0)
 
-#define TASK_MODULE_BIT (1 << 0)
+#define TASK_MODULE_BIT   (1 << 0)
 
 /* Can be changed with a compiler options */
 #ifndef TASK_LIMIT
@@ -21,11 +21,11 @@ typedef struct TASK TASK;
 struct TASK
 {
   UINTPTR MemoryMap;
-  TASK_CONTEXT *pContext;
   const TASK *pNext;
   const TASK *pPrevious;
-  const TASK *pSenderList;
-  const TASK *pMessage;
+  TASK_CONTEXT *pContext;
+  const MESSAGE_QUEUE *pMessageQueue;
+  UINTPTR WaitInfo;
   UINT ParentID;
   UINT TaskID;
   UINT Flags;
@@ -36,6 +36,8 @@ void InitTasks();
 const TASK *GetTaskByID(UINT TaskID);
 
 TASK_CONTEXT *CreateTaskContext();
+
+void DeleteTaskContext(TASK_CONTEXT *pContext);
 
 void SaveTaskContext(TASK_CONTEXT *pContext);
 
@@ -48,5 +50,11 @@ const TASK *CreateTask(UINT Flags);
 BOOL DeleteTask(const TASK *pTask);
 
 void SwitchTask();
+
+BOOL SendTaskMessage(MESSAGE *pMessage);
+
+BOOL PeekTaskMessage(MESSAGE *pMessage);
+
+BOOL ReceiveTaskMessage(MESSAGE *pMessage, BOOL bWait);
 
 #endif

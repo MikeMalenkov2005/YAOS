@@ -1,3 +1,4 @@
+#include "kernel/memory.h"
 #include <kernel/arch/x86/mmu.h>
 #include <kernel/panic.h>
 #include <kernel/task.h>
@@ -175,6 +176,12 @@ BOOL FreeMappedPage(UINTPTR VirtualPage)
   *(UINTPTR*)(void*)VirtualPage = NextFreePage;
   NextFreePage = Mapping & PAGE_ADDRESS_MASK;
   return SetPageMapping(VirtualPage, 0);
+}
+
+BOOL IsUserPage(UINTPTR VirtualPage)
+{
+  if (VirtualPage >= (UINTPTR)pPageTable) return FALSE;
+  return GetPageMapping(VirtualPage) & MAPPING_USER_MODE_BIT;
 }
 
 void InitMMU(UINTPTR FreePageList)

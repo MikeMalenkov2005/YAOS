@@ -7,12 +7,10 @@
 
 struct TASK_CONTEXT
 {
-  INTERRUPT_FRAME Frame;
   FPU_STATE FPUState;
+  INTERRUPT_FRAME Frame;
 };
 
-void SaveTaskFrame(INTERRUPT_FRAME *pFrame);
-
-void LoadTaskFrame(INTERRUPT_FRAME *pFrame);
+void SetTaskFrame(INTERRUPT_FRAME *pFrame);
 
 #endif

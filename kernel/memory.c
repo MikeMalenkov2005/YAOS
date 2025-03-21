@@ -103,3 +103,22 @@ void *MapBestFreePages(SIZE_T PageCount, UINT MappingFlags)
   return (void*)FirstPage;
 }
 
+SIZE_T FreeMappedPages(UINTPTR FirstPage, SIZE_T PageCount)
+{
+  FirstPage &= PAGE_ADDRESS_MASK;
+  for (SIZE_T i = 0; i < PageCount; ++i)
+  {
+    if (!FreeMappedPage(FirstPage + i * PAGE_SIZE)) return i;
+  }
+  return PageCount;
+}
+
+BOOL CheckUserAccess(const void *pBlock, SIZE_T Size)
+{
+  for (UINTPTR VirtualPage = PAGE_ROUND_DOWN((UINTPTR)pBlock); VirtualPage < PAGE_ROUND_UP((UINTPTR)pBlock + Size); VirtualPage += PAGE_SIZE)
+  {
+    if (!IsUserPage(VirtualPage)) return FALSE;
+  }
+  return TRUE;
+}
+

@@ -8,12 +8,10 @@
 void HandleInterrupt(INTERRUPT_FRAME Frame)
 {
   /* TODO: Handle MORE Interrupts */
-  SaveTaskFrame(&Frame);
+  SetTaskFrame(&Frame);
   if (Frame.ISRIndex == 32) HandleTimerTick();
-  if (Frame.ISRIndex == 128)
-  {
-    Frame.EAX = HandleSystemCall(Frame.EAX, Frame.ECX, Frame.EDX);
-  }
+  if (Frame.ISRIndex == 128) HandleSystemCall((void*)&Frame.EAX, Frame.EAX,
+      (SYSCALL_ARGUMENTS){Frame.EBX, Frame.ECX, Frame.EDX});
   if (Frame.ISRIndex >= 32 && Frame.ISRIndex < 48)
   {
     if (Frame.ISRIndex >= 40)
@@ -22,7 +20,6 @@ void HandleInterrupt(INTERRUPT_FRAME Frame)
     }
     WritePort8(0x20, 0x20);
   }
-  LoadTaskFrame(&Frame);
 }
 
 void __naked isr()

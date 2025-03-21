@@ -37,6 +37,8 @@ BOOL MapFreePage(UINTPTR VirtualPage, UINT MappingFlags);
 
 BOOL FreeMappedPage(UINTPTR VirtualPage);
 
+BOOL IsUserPage(UINTPTR VirtualPage);
+
 UINTPTR FindFirstFreeVirtualPages(SIZE_T PageCount);
 
 UINTPTR FindLastFreeVirtualPages(SIZE_T PageCount);
@@ -48,5 +50,9 @@ void *MapFirstFreePages(SIZE_T PageCount, UINT MappingFlags);
 void *MapLastFreePages(SIZE_T PageCount, UINT MappingFlags);
 
 void *MapBestFreePages(SIZE_T PageCount, UINT MappingFlags);
+
+SIZE_T FreeMappedPages(UINTPTR FirstPage, SIZE_T PageCount);
+
+BOOL CheckUserAccess(const void *pBlock, SIZE_T Size);
 
 #endif
