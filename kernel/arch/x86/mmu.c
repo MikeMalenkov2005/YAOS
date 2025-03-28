@@ -11,6 +11,8 @@ static UINTPTR NextFreePage;
 static UINTPTR *const pPageDirectory = (void*)PAGE_ADDRESS_MASK;
 static UINTPTR *const pPageTable = (void*)(~(UINTPTR)(PAGE_SIZE * PAGE_TABLE_SIZE - 1));
 
+extern void DebugPrint(UINT8 Prefix, UINTPTR Page);
+
 UINTPTR GetMemoryMap()
 {
   UINTPTR MemoryMap;
@@ -88,6 +90,7 @@ BOOL DeleteMemoryMap(UINTPTR MemoryMap)
           *(UINTPTR*)(void*)VirtualPages = NextFreePage;
           NextFreePage = Page & PAGE_ADDRESS_MASK;
           (void)SetPageMapping(VirtualPages, pDirectoryToDelete[TableIndex]);
+          DebugPrint('D', Page);
         }
         /* TODO: Handle not present pages (aka swap) */
       }
@@ -119,11 +122,13 @@ UINTPTR GetPageMapping(UINTPTR VirtualPage)
   if (Page & PAGE_WRITABLE_FLAG) Mapping |= MAPPING_WRITABLE_BIT;
   if (Page & PAGE_USER_FLAG) Mapping |= MAPPING_USER_MODE_BIT;
   if (Page & PAGE_GLOBAL_FLAG) Mapping |= MAPPING_GLOBAL_BIT;
+  if (Page & PAGE_EXTERNAL_FLAG) Mapping |= MAPPING_EXTERNAL_BIT;
   return Mapping;
 }
 
 BOOL SetPageMapping(UINTPTR VirtualPage, UINTPTR Mapping)
 {
+  //DebugPrint(Mapping ? 's' : 'c', VirtualPage);
   UINTPTR PageIndex = VirtualPage >> PAGE_SHIFT;
   UINTPTR TableIndex = PageIndex / PAGE_TABLE_SIZE;
   if (TableIndex == PAGE_TABLE_SIZE - 1) return FALSE; /* Refuse access to the Page Table Region */
@@ -133,6 +138,7 @@ BOOL SetPageMapping(UINTPTR VirtualPage, UINTPTR Mapping)
   if (Mapping & MAPPING_WRITABLE_BIT) Page |= PAGE_WRITABLE_FLAG;
   if (Mapping & MAPPING_USER_MODE_BIT) Page |= PAGE_USER_FLAG;
   if (Mapping & MAPPING_GLOBAL_BIT) Page |= PAGE_GLOBAL_FLAG;
+  if (Mapping & MAPPING_EXTERNAL_BIT) Page |= PAGE_EXTERNAL_FLAG;
   if (!(pPageDirectory[TableIndex] & PAGE_PRESENT_FLAG))
   {
     if (!Page) return TRUE;
@@ -142,6 +148,7 @@ BOOL SetPageMapping(UINTPTR VirtualPage, UINTPTR Mapping)
     InvalidatePage((UINTPTR)(void*)&pPageTable[TableIndex * PAGE_TABLE_SIZE]);
     NextFreePage = pPageTable[TableIndex * PAGE_TABLE_SIZE];
     for (UINTPTR i = 0; i < PAGE_TABLE_SIZE; ++i) pPageTable[TableIndex * PAGE_TABLE_SIZE + i] = 0;
+    DebugPrint('A', VirtualPage);
   }
   pPageTable[PageIndex] = Page;
   InvalidatePage(VirtualPage);
@@ -154,22 +161,31 @@ BOOL SetPageMapping(UINTPTR VirtualPage, UINTPTR Mapping)
   pPageTable[TableIndex * PAGE_TABLE_SIZE] = NextFreePage;
   NextFreePage = pPageDirectory[TableIndex] & PAGE_ADDRESS_MASK;
   pPageDirectory[TableIndex] = 0;
+  DebugPrint('F', VirtualPage);
   InvalidatePage((UINTPTR)(void*)&pPageTable[TableIndex * PAGE_TABLE_SIZE]);
   return TRUE;
 }
 
 BOOL MapFreePage(UINTPTR VirtualPage, UINT MappingFlags)
 {
-  UINTPTR Mapping = NextFreePage | (MappingFlags & PAGE_FLAGS_MASK) | MAPPING_PRESENT_BIT;
+  DebugPrint('a', VirtualPage);
   if (!NextFreePage /* Out of Free Pages */
       || GetPageMapping(VirtualPage) /* The Page is already Mapped */
-      || !SetPageMapping(VirtualPage, Mapping)) return FALSE; /* The Page cannot be Mapped */
+      || !SetPageMapping(VirtualPage, MAPPING_EXTERNAL_BIT)) return FALSE; /* The Page cannot be Mapped */
+  if (!NextFreePage)
+  {
+    /* Out of Free Pages Again */
+    (void)SetPageMapping(VirtualPage, 0);
+    return FALSE;
+  }
+  (void)SetPageMapping(VirtualPage, NextFreePage | (MappingFlags & PAGE_FLAGS_MASK) | MAPPING_PRESENT_BIT);
   NextFreePage = *(UINTPTR*)(void*)VirtualPage;
   return TRUE;
 }
 
 BOOL FreeMappedPage(UINTPTR VirtualPage)
 {
+  DebugPrint('f', VirtualPage);
   if (VirtualPage >= (UINTPTR)pPageTable) return FALSE; /* The Page Table can NOT be freed with this function */
   UINTPTR Mapping = GetPageMapping(VirtualPage);
   if (!(Mapping & MAPPING_PRESENT_BIT)) return FALSE;
@@ -211,7 +227,7 @@ void InitMMU(UINTPTR FreePageList)
   }
   /* Enable Paging */
   UINT32 CR0;
-  asm volatile ("mov %0, %%cr3" : : "a"(pSystemPageDirectory) : "memory");
+  asm volatile ("mov %0, %%cr3" : : "a"((UINTPTR)(void*)pSystemPageDirectory) : "memory");
   asm volatile ("mov %%cr0, %0" : "=a"(CR0));
   asm volatile ("mov %0, %%cr0" : : "a"(CR0 | 0x80000001U));
 }

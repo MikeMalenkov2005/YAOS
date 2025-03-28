@@ -1,6 +1,8 @@
 ROOTDIR = ../..
 include $(ROOTDIR)/config.mk
 
+LDFLAGS += -e Init
+
 .PHONY: clean
 
 $(ROOTDIR)/idle.sys: $(OBJECTS)
@@ -11,3 +13,4 @@ $(OBJECTS): %.o: %.c
 
 clean:
 	rm -f *.o
+

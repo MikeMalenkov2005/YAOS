@@ -15,7 +15,7 @@ FLOPPY = floppy.img
 
 $(ROOTDIR)/$(KERNEL).img: $(KERNEL_FILE) $(FLOPPY) $(MODULE_FILES)
 	cp $(FLOPPY) $@
-	mcopy -i $@ $(KERNEL_FILE) ::/YAOS.SYS
+	mcopy -i $@ $(KERNEL_FILE) ::/$(KERNEL_NAME).sys
 	mcopy -i $@ $(MODULE_FILES) ::/
 
 $(FLOPPY): $(GRUBIMG) $(GRUBCFG)
@@ -23,7 +23,7 @@ $(FLOPPY): $(GRUBIMG) $(GRUBCFG)
 	dd if=/usr/lib/grub/i386-pc/boot.img of=$@ conv=notrunc
 	dd if=$(GRUBIMG) of=$@ conv=notrunc seek=1
 	mformat -i $@ -kR $(shell echo $$(($(shell ls --block-size=512 -s $(GRUBIMG) | sed 's/\s.*$$//') + 2)))
-	mcopy -i $@ $(GRUBCFG) ::/GRUB.CFG
+	mcopy -i $@ $(GRUBCFG) ::/
 
 $(GRUBIMG):
 	grub-mkimage -p / -C auto -O i386-pc -o $@ $(GRUBMOD)

@@ -2,13 +2,31 @@
 #include <kernel/arch/x86/pio.h>
 #include <kernel/syscall.h>
 #include <kernel/timer.h>
+#include <kernel/panic.h>
 #include <attrib.h>
 #include <types.h>
+
+extern void DebugPrint(UINT8 Prefix, UINTPTR Page);
+
+inline static UINTPTR ReadCR2()
+{
+  UINTPTR CR2;
+  asm volatile ("mov %%cr2, %0" : "=a"(CR2));
+  return CR2;
+}
 
 void HandleInterrupt(INTERRUPT_FRAME Frame)
 {
   /* TODO: Handle MORE Interrupts */
   SetTaskFrame(&Frame);
+  if (Frame.ISRIndex < 32)
+  {
+    DebugPrint('E', Frame.ISRIndex);
+    DebugPrint('C', Frame.ErrorCode);
+    DebugPrint('R', ReadCR2());
+    DebugPrint('I', Frame.EIP);
+    KernelPanic("EXCEPTION");
+  }
   if (Frame.ISRIndex == 32) HandleTimerTick();
   if (Frame.ISRIndex == 128) HandleSystemCall((void*)&Frame.EAX, Frame.EAX,
       (SYSCALL_ARGUMENTS){Frame.EBX, Frame.ECX, Frame.EDX});

@@ -6,7 +6,7 @@ static UINTPTR TimerTicks = 0;
 void HandleTimerTick()
 {
   ++TimerTicks;
-  SwitchTask();
+  SwitchTask(FALSE);
 }
 
 UINTPTR GetTimerTicks()

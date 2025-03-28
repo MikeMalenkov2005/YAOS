@@ -4,8 +4,11 @@
 MESSAGE_QUEUE *CreateMessageQueue()
 {
   MESSAGE_QUEUE *pQueue = MapLastFreePages(PAGE_ROUND_UP(sizeof(MESSAGE_QUEUE)) / PAGE_SIZE, MAPPING_WRITABLE_BIT | MAPPING_READABLE_BIT);
-  pQueue->Head = 0;
-  pQueue->Tail = 0;
+  if (pQueue)
+  {
+    pQueue->Head = 0;
+    pQueue->Tail = 0;
+  }
   return pQueue;
 }
 

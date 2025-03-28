@@ -21,6 +21,7 @@ CC = clang
 CFLAGS = -I$(ROOTDIR)/include -ffreestanding -fno-builtin -nostdlib -nostdinc -fno-stack-protector -Wall -Wextra -Werror -Os -c
 
 LD = ld.lld
+LDFLAGS = -s
 
 #### TARGET SPECIFIC ####
 

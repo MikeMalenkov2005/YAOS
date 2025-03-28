@@ -12,6 +12,10 @@
 #define TASK_LIMIT 1024
 #endif
 
+#ifndef TASK_STACK_SIZE
+#define TASK_STACK_SIZE 0x2000
+#endif
+
 typedef struct TASK_CONTEXT TASK_CONTEXT;
 
 typedef struct TASK TASK;
@@ -35,7 +39,7 @@ void InitTasks();
 
 const TASK *GetTaskByID(UINT TaskID);
 
-TASK_CONTEXT *CreateTaskContext();
+TASK_CONTEXT *CreateTaskContext(SIZE_T StackSize);
 
 void DeleteTaskContext(TASK_CONTEXT *pContext);
 
@@ -43,13 +47,15 @@ void SaveTaskContext(TASK_CONTEXT *pContext);
 
 void LoadTaskContext(TASK_CONTEXT *pContext);
 
+void SetCurrentUserIP(UINTPTR IP);
+
 const TASK *GetCurrentTask();
 
-const TASK *CreateTask(UINT Flags);
+const TASK *CreateTask(SIZE_T StackSize, UINT Flags);
 
 BOOL DeleteTask(const TASK *pTask);
 
-void SwitchTask();
+void SwitchTask(BOOL bReverse);
 
 BOOL SendTaskMessage(MESSAGE *pMessage);
 

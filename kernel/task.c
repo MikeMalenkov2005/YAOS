@@ -37,7 +37,7 @@ const TASK *GetCurrentTask()
   return pCurrentTask;
 }
 
-const TASK *CreateTask(UINT Flags)
+const TASK *CreateTask(SIZE_T StackSize, UINT Flags)
 {
   TASK *pTask = NULL;
   for (UINT i = 0; i < TASK_LIMIT && NextTaskID != INVALID_TASK_ID; ++i)
@@ -58,22 +58,28 @@ const TASK *CreateTask(UINT Flags)
       pTask->pPrevious = pCurrentTask;
       pCurrentTask->pNext = pTask;
       pTask->ParentID = pCurrentTask->TaskID;
+      SaveTaskContext(pCurrentTask->pContext);
     }
     else
     {
       pTask->MemoryMap = GetMemoryMap();
       pTask->pNext = pTask;
       pTask->pPrevious = pTask;
-      pCurrentTask = pTask;
     }
     UINTPTR MemoryMap = GetMemoryMap();
     if (MemoryMap != pTask->MemoryMap) SetMemoryMap(pTask->MemoryMap);
-    pTask->pContext = CreateTaskContext();
-    pTask->pMessageQueue = CreateMessageQueue();
-    /* TODO: Initialize Task Memory */
-    if (MemoryMap != pTask->MemoryMap) SetMemoryMap(MemoryMap);
+    BOOL bTMP = !(pTask->pMessageQueue = CreateMessageQueue()); /* FAILES TO ALLOCATE */
+    bTMP = bTMP || !(pTask->pContext = CreateTaskContext(StackSize ? StackSize : TASK_STACK_SIZE));
+    if (bTMP)
+    {
+      if (MemoryMap != pTask->MemoryMap) SetMemoryMap(MemoryMap);
+      DeleteTask(pTask);
+      return NULL;
+    }
     pTask->TaskID = NextTaskID++;
     pTask->Flags = Flags;
+    pCurrentTask = pTask;
+    LoadTaskContext(pCurrentTask->pContext);
   }
   return pTask;
 }
@@ -82,9 +88,9 @@ BOOL DeleteTask(const TASK *pTask)
 {
   if (!pTask) return FALSE;
   TASK *pTaskToDelete = (TASK*)pTask;
-  if (pTaskToDelete == pCurrentTask) SwitchTask();
+  if (pTaskToDelete == pCurrentTask) SwitchTask(FALSE);
   if (pTaskToDelete == pCurrentTask) return FALSE;
-  if (!DeleteMemoryMap(pTaskToDelete->MemoryMap)) return FALSE;
+  if (pTaskToDelete->MemoryMap != GetMemoryMap() && !DeleteMemoryMap(pTaskToDelete->MemoryMap)) return FALSE;
   ((TASK*)pTaskToDelete->pPrevious)->pNext = pTaskToDelete->pNext;
   ((TASK*)pTaskToDelete->pNext)->pPrevious = pTaskToDelete->pPrevious;
   pTaskToDelete->MemoryMap = 0;
@@ -99,14 +105,14 @@ BOOL DeleteTask(const TASK *pTask)
   return TRUE;
 }
 
-void SwitchTask()
+void SwitchTask(BOOL bReverse)
 {
   if (pCurrentTask && pCurrentTask->pNext != pCurrentTask)
   {
     LoadTaskContext(pCurrentTask->pContext);
     do
     {
-      pCurrentTask = (TASK*)pCurrentTask->pNext;
+      pCurrentTask = (TASK*)(bReverse ? pCurrentTask->pPrevious : pCurrentTask->pNext);
       SetMemoryMap(pCurrentTask->MemoryMap);
       if (pCurrentTask->WaitInfo)
       {
@@ -142,7 +148,7 @@ BOOL ReceiveTaskMessage(MESSAGE *pMessage, BOOL bWait)
   {
     if (!bWait) return FALSE;
     TASK *pWaitingTask = pCurrentTask;
-    SwitchTask();
+    SwitchTask(FALSE);
     if (pCurrentTask == pWaitingTask) return FALSE;
     pWaitingTask->WaitInfo = (UINTPTR)(void*)pMessage;
   }

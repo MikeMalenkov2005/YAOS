@@ -26,14 +26,22 @@ MBOOT_HEADER:
   dd 0
 
 entry:
-  mov esp, STACK.TOP
-  push esp
+  mov ebp, STACK.TOP
+  mov esp, ebp
+  sub esp, 64
+  push ebp
   push ebx
   push eax
   call InitArch
-  cli
-  hlt
-  jmp $
+  add esp, 12
+  pop eax
+  mov ds, ax
+  mov es, ax
+  mov fs, ax
+  mov ds, ax
+  popa
+  add esp, 8
+  iret
 
 section .bss
 

@@ -45,6 +45,8 @@ UINTPTR FindLastFreeVirtualPages(SIZE_T PageCount);
 
 UINTPTR FindBestFreeVirtualPages(SIZE_T PageCount);
 
+void *MapFreePages(UINTPTR FirstPage, SIZE_T PageCount, UINT MappingFlags);
+
 void *MapFirstFreePages(SIZE_T PageCount, UINT MappingFlags);
 
 void *MapLastFreePages(SIZE_T PageCount, UINT MappingFlags);

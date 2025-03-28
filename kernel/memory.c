@@ -27,7 +27,7 @@ UINTPTR FindLastFreeVirtualPages(SIZE_T PageCount)
 {
   if (!PageCount) return 0;
   BOOL bFound = FALSE;
-  UINTPTR FirstPage = PAGE_ROUND_DOWN(~(UINTPTR)0) - (PageCount - 1) * PAGE_SIZE;
+  UINTPTR FirstPage = (UINTPTR)0 - PageCount * PAGE_SIZE;
   while (!bFound && FirstPage)
   {
     bFound = TRUE;
@@ -49,10 +49,8 @@ UINTPTR FindBestFreeVirtualPages(SIZE_T PageCount)
   return PageCount ? 0 : 0;
 }
 
-void *MapFirstFreePages(SIZE_T PageCount, UINT MappingFlags)
+void *MapFreePages(UINTPTR FirstPage, SIZE_T PageCount, UINT MappingFlags)
 {
-  UINTPTR FirstPage = FindFirstFreeVirtualPages(PageCount);
-  if (!FirstPage) return NULL;
   for (SIZE_T i = 0; i < PageCount; ++i)
   {
     if (!MapFreePage(FirstPage + i * PAGE_SIZE, MappingFlags))
@@ -65,42 +63,27 @@ void *MapFirstFreePages(SIZE_T PageCount, UINT MappingFlags)
     }
   }
   return (void*)FirstPage;
+}
+
+void *MapFirstFreePages(SIZE_T PageCount, UINT MappingFlags)
+{
+  UINTPTR FirstPage = FindFirstFreeVirtualPages(PageCount);
+  if (!FirstPage) return NULL;
+  return MapFreePages(FirstPage, PageCount, MappingFlags);
 }
 
 void *MapLastFreePages(SIZE_T PageCount, UINT MappingFlags)
 {
   UINTPTR FirstPage = FindLastFreeVirtualPages(PageCount);
   if (!FirstPage) return NULL;
-  for (SIZE_T i = 0; i < PageCount; ++i)
-  {
-    if (!MapFreePage(FirstPage + i * PAGE_SIZE, MappingFlags))
-    {
-      for (SIZE_T j = 0; j < i; ++j)
-      {
-        (void)FreeMappedPage(FirstPage + j * PAGE_SIZE);
-      }
-      return NULL;
-    }
-  }
-  return (void*)FirstPage;
+  return MapFreePages(FirstPage, PageCount, MappingFlags);
 }
 
 void *MapBestFreePages(SIZE_T PageCount, UINT MappingFlags)
 {
   UINTPTR FirstPage = FindBestFreeVirtualPages(PageCount);
   if (!FirstPage) return NULL;
-  for (SIZE_T i = 0; i < PageCount; ++i)
-  {
-    if (!MapFreePage(FirstPage + i * PAGE_SIZE, MappingFlags))
-    {
-      for (SIZE_T j = 0; j < i; ++j)
-      {
-        (void)FreeMappedPage(FirstPage + j * PAGE_SIZE);
-      }
-      return NULL;
-    }
-  }
-  return (void*)FirstPage;
+  return MapFreePages(FirstPage, PageCount, MappingFlags);
 }
 
 SIZE_T FreeMappedPages(UINTPTR FirstPage, SIZE_T PageCount)
