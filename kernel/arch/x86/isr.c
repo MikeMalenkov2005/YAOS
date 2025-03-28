@@ -18,21 +18,22 @@ inline static UINTPTR ReadCR2()
 void HandleInterrupt(INTERRUPT_FRAME Frame)
 {
   /* TODO: Handle MORE Interrupts */
+  UINT ISRIndex = Frame.ISRIndex;
   SetTaskFrame(&Frame);
-  if (Frame.ISRIndex < 32)
+  if (ISRIndex < 32)
   {
-    DebugPrint('E', Frame.ISRIndex);
+    DebugPrint('E', ISRIndex);
     DebugPrint('C', Frame.ErrorCode);
     DebugPrint('R', ReadCR2());
     DebugPrint('I', Frame.EIP);
     KernelPanic("EXCEPTION");
   }
-  if (Frame.ISRIndex == 32) HandleTimerTick();
-  if (Frame.ISRIndex == 128) HandleSystemCall((void*)&Frame.EAX, Frame.EAX,
+  if (ISRIndex == 32) HandleTimerTick();
+  if (ISRIndex == 128) HandleSystemCall((void*)&Frame.EAX, Frame.EAX,
       (SYSCALL_ARGUMENTS){Frame.EBX, Frame.ECX, Frame.EDX});
-  if (Frame.ISRIndex >= 32 && Frame.ISRIndex < 48)
+  if (ISRIndex >= 32 && ISRIndex < 48)
   {
-    if (Frame.ISRIndex >= 40)
+    if (ISRIndex >= 40)
     {
       WritePort8(0xA0, 0x20);
     }

@@ -174,7 +174,7 @@ void InitIDT()
   IDT[i++] = IDT_ENTRY((UINTPTR)isr46, 8, 0x8E);
   IDT[i++] = IDT_ENTRY((UINTPTR)isr47, 8, 0x8E);
   while (i < 256) IDT[i++] = IDT_ENTRY(0, 0, 0);
-  IDT[128] = IDT_ENTRY((UINTPTR)isr128, 8, 0x8E);
+  IDT[128] = IDT_ENTRY((UINTPTR)isr128, 8, 0xEE); /* DPL = 3 */
   /* Load the Interrupt Descriptor Table */
   asm volatile ("lidt %0" : : "m"(IDTR));
 }
