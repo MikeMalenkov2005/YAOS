@@ -37,6 +37,14 @@ The `make clean` command deletes everything created during the build process.
 TODO List
 ---------
 
-- Fix `CreateMemoryMap` and `DeleteMemoryMap` in `kernel/arch/x86/mmu.c`
-- Fix `MapFreePages` not working in a newly created memory map
+- Add more system calls
+- Create a VGA driver
+- Create a PS/2 driver
+- Create a PCI driver
+- Create a FDD driver
+- Create a HDD driver
+- Create a VFS (virtual file system) driver
+- Create a vFAT driver
+- Create a SO (shared object) driver
+- Write some applications
 

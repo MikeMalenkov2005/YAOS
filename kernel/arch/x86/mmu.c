@@ -1,4 +1,3 @@
-#include "kernel/memory.h"
 #include <kernel/arch/x86/mmu.h>
 #include <kernel/panic.h>
 #include <kernel/task.h>
@@ -8,8 +7,8 @@ extern void __end;
 
 static UINTPTR NextFreePage;
 
-static UINTPTR *const pPageDirectory = (void*)PAGE_ADDRESS_MASK;
-static UINTPTR *const pPageTable = (void*)(~(UINTPTR)(PAGE_SIZE * PAGE_TABLE_SIZE - 1));
+static volatile UINTPTR *const pPageDirectory = (void*)PAGE_ADDRESS_MASK;
+static volatile UINTPTR *const pPageTable = (void*)(~(UINTPTR)(PAGE_SIZE * PAGE_TABLE_SIZE - 1));
 
 extern void DebugPrint(UINT8 Prefix, UINTPTR Page);
 
@@ -32,30 +31,26 @@ UINTPTR CreateMemoryMap()
   UINTPTR *pNewDirectory = (void*)(VirtualPages + PAGE_SIZE);
   pNewDirectory[PAGE_TABLE_SIZE - 1] = pPageTable[(VirtualPages >> PAGE_SHIFT) + 1];
   UINTPTR MemoryMap = pNewDirectory[PAGE_TABLE_SIZE - 1] & PAGE_ADDRESS_MASK;
-  UINTPTR *pNewTable = (void*)VirtualPages;
-  BOOL bNeedNewTable = FALSE;
-  for (UINTPTR VirtualPage = 0; VirtualPage < (UINTPTR)(void*)pPageTable; VirtualPage += PAGE_SIZE)
+  volatile UINTPTR *pNewTable = (void*)VirtualPages;
+  for (UINTPTR TableIndex = 0; TableIndex < PAGE_TABLE_SIZE - 1; ++TableIndex)
   {
-    UINTPTR PageIndex = VirtualPage >> PAGE_SHIFT;
-    UINTPTR TableIndex = PageIndex / PAGE_TABLE_SIZE;
-    UINTPTR LocalPageIndex = PageIndex % PAGE_TABLE_SIZE;
-    UINTPTR Page = pPageDirectory[TableIndex] & PAGE_PRESENT_FLAG ? pPageTable[PageIndex] : 0;
-    if (!LocalPageIndex) bNeedNewTable = TRUE;
-    if (Page & (PAGE_GLOBAL_FLAG | PAGE_EXTERNAL_FLAG))
+    if (pPageDirectory[TableIndex] & PAGE_PRESENT_FLAG)
     {
-      if (bNeedNewTable)
+      (void)SetPageMapping(VirtualPages, 0);
+      if (!MapFreePage(VirtualPages, MAPPING_WRITABLE_BIT | MAPPING_READABLE_BIT | MAPPING_USER_MODE_BIT))
       {
-        (void)SetPageMapping(VirtualPages, 0);
-        if (!MapFreePage(VirtualPages, MAPPING_WRITABLE_BIT | MAPPING_READABLE_BIT | MAPPING_USER_MODE_BIT))
-        {
-          (void)DeleteMemoryMap(MemoryMap);
-          return 0;
-        }
-        pNewDirectory[TableIndex] = pPageTable[VirtualPages >> PAGE_SHIFT];
-        bNeedNewTable = FALSE;
+        (void)SetPageMapping(VirtualPages + PAGE_SIZE, 0);
+        (void)DeleteMemoryMap(MemoryMap);
+        return 0;
       }
-      pNewTable[LocalPageIndex] = Page;
+      pNewDirectory[TableIndex] = pPageTable[VirtualPages >> PAGE_SHIFT];
+      for (UINTPTR PageIndex = 0; PageIndex < PAGE_TABLE_SIZE; ++PageIndex)
+      {
+        UINTPTR Page = pPageTable[TableIndex * PAGE_TABLE_SIZE + PageIndex];
+        pNewTable[PageIndex] = (Page & PAGE_GLOBAL_FLAG) ? Page : 0;
+      }
     }
+    else pNewDirectory[TableIndex] = PAGE_USER_FLAG;
   }
   (void)SetPageMapping(VirtualPages + PAGE_SIZE, 0);
   (void)SetPageMapping(VirtualPages, 0);
@@ -64,33 +59,32 @@ UINTPTR CreateMemoryMap()
 
 BOOL DeleteMemoryMap(UINTPTR MemoryMap)
 {
-  UINTPTR CurrentMap = GetMemoryMap();
-  if (MemoryMap == CurrentMap) return FALSE;
+  if ((MemoryMap & PAGE_FLAGS_MASK) || MemoryMap == GetMemoryMap()) return FALSE;
   UINTPTR VirtualPages = FindLastFreeVirtualPages(2);
   if (!VirtualPages) return FALSE;
   (void)SetPageMapping(VirtualPages + PAGE_SIZE, MemoryMap | MAPPING_READABLE_BIT | MAPPING_WRITABLE_BIT | MAPPING_PRESENT_BIT);
   UINTPTR *pDirectoryToDelete = (void*)(VirtualPages + PAGE_SIZE);
-  if ((pDirectoryToDelete[PAGE_TABLE_SIZE - 1] & PAGE_ADDRESS_MASK) != MemoryMap)
+  if (pDirectoryToDelete[PAGE_TABLE_SIZE - 1] != (MemoryMap | PAGE_PRESENT_FLAG | PAGE_WRITABLE_FLAG))
   {
-    SetPageMapping(VirtualPages + PAGE_SIZE, 0);
+    (void)SetPageMapping(VirtualPages + PAGE_SIZE, 0);
     return FALSE;
   }
+  volatile UINTPTR *pTableToDelete = (void*)VirtualPages;
   for (UINTPTR TableIndex = 0; TableIndex < PAGE_TABLE_SIZE - 1; ++TableIndex)
   {
     (void)SetPageMapping(VirtualPages, pDirectoryToDelete[TableIndex]);
-    UINTPTR *pTableToDelete = (void*)VirtualPages;
     for (UINTPTR PageIndex = 0; PageIndex < PAGE_TABLE_SIZE; ++PageIndex)
     {
       UINTPTR Page = pTableToDelete[PageIndex];
       if (!(Page & (PAGE_GLOBAL_FLAG | PAGE_EXTERNAL_FLAG)))
       {
+        /* Free the Owned Page */
         if (Page & PAGE_PRESENT_FLAG)
         {
           (void)SetPageMapping(VirtualPages, (Page & PAGE_ADDRESS_MASK) | MAPPING_WRITABLE_BIT | MAPPING_PRESENT_BIT);
-          *(UINTPTR*)(void*)VirtualPages = NextFreePage;
+          *pTableToDelete = NextFreePage;
           NextFreePage = Page & PAGE_ADDRESS_MASK;
           (void)SetPageMapping(VirtualPages, pDirectoryToDelete[TableIndex]);
-          DebugPrint('D', Page);
         }
         /* TODO: Handle not present pages (aka swap) */
       }
@@ -117,8 +111,9 @@ UINTPTR GetPageMapping(UINTPTR VirtualPage)
   if (!(pPageDirectory[TableIndex] & PAGE_PRESENT_FLAG)) return 0; /* There is no Page if there is no Page Table */
   UINTPTR Page = pPageTable[PageIndex];
   /* Convert x86 Page Table Entry to Mapping */
-  UINTPTR Mapping = Page & PAGE_ADDRESS_MASK;
-  if (Page & PAGE_PRESENT_FLAG) Mapping |= MAPPING_PRESENT_BIT | MAPPING_READABLE_BIT | MAPPING_EXECUTABLE_BIT; /* Every Page is Readable and Executable on x86 */
+  UINTPTR Mapping = (Page & PAGE_ADDRESS_MASK);
+  if (Page) Mapping |= MAPPING_READABLE_BIT | MAPPING_EXECUTABLE_BIT; /* Every Page is Readable and Executable on x86 */
+  if (Page & PAGE_PRESENT_FLAG) Mapping |= MAPPING_PRESENT_BIT;
   if (Page & PAGE_WRITABLE_FLAG) Mapping |= MAPPING_WRITABLE_BIT;
   if (Page & PAGE_USER_FLAG) Mapping |= MAPPING_USER_MODE_BIT;
   if (Page & PAGE_GLOBAL_FLAG) Mapping |= MAPPING_GLOBAL_BIT;

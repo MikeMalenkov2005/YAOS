@@ -109,7 +109,7 @@ void SwitchTask(BOOL bReverse)
 {
   if (pCurrentTask && pCurrentTask->pNext != pCurrentTask)
   {
-    LoadTaskContext(pCurrentTask->pContext);
+    SaveTaskContext(pCurrentTask->pContext);
     do
     {
       pCurrentTask = (TASK*)(bReverse ? pCurrentTask->pPrevious : pCurrentTask->pNext);
