@@ -25,7 +25,7 @@ void InitTasks()
 const TASK *GetTaskByID(UINT TaskID)
 {
   if (TaskID == INVALID_TASK_ID) return NULL;
-  for (UINT i = 0; i < 0; ++i)
+  for (UINT i = 0; i < TASK_LIMIT; ++i)
   {
     if (Tasks[i].TaskID == TaskID) return &Tasks[i];
   }
@@ -68,9 +68,8 @@ const TASK *CreateTask(SIZE_T StackSize, UINT Flags)
     }
     UINTPTR MemoryMap = GetMemoryMap();
     if (MemoryMap != pTask->MemoryMap) SetMemoryMap(pTask->MemoryMap);
-    BOOL bTMP = !(pTask->pMessageQueue = CreateMessageQueue()); /* FAILES TO ALLOCATE */
-    bTMP = bTMP || !(pTask->pContext = CreateTaskContext(StackSize ? StackSize : TASK_STACK_SIZE));
-    if (bTMP)
+    if (!(pTask->pMessageQueue = CreateMessageQueue()) ||
+        !(pTask->pContext = CreateTaskContext(StackSize ? StackSize : TASK_STACK_SIZE, Flags)))
     {
       if (MemoryMap != pTask->MemoryMap) SetMemoryMap(MemoryMap);
       DeleteTask(pTask);

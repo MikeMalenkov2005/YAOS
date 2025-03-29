@@ -51,6 +51,7 @@ UINTPTR FindBestFreeVirtualPages(SIZE_T PageCount)
 
 void *MapFreePages(UINTPTR FirstPage, SIZE_T PageCount, UINT MappingFlags)
 {
+  if (!PageCount) return NULL;
   for (SIZE_T i = 0; i < PageCount; ++i)
   {
     if (!MapFreePage(FirstPage + i * PAGE_SIZE, MappingFlags))

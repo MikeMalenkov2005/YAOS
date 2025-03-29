@@ -10,7 +10,7 @@ static __naked UINT32 GetEFLAGS()
   asm volatile ("ret");
 }
 
-TASK_CONTEXT *CreateTaskContext(SIZE_T StackSize)
+TASK_CONTEXT *CreateTaskContext(SIZE_T StackSize, UINT Flags)
 {
   TASK_CONTEXT *pContext = MapLastFreePages(PAGE_ROUND_UP(sizeof(TASK_CONTEXT)) / PAGE_SIZE, MAPPING_WRITABLE_BIT | MAPPING_READABLE_BIT);
   if (pContext)
@@ -27,8 +27,9 @@ TASK_CONTEXT *CreateTaskContext(SIZE_T StackSize)
     pContext->Frame.SS = 0x23;
     pContext->Frame.ESP = (UINTPTR)pStack + StackSize;
     pContext->Frame.EFLAGS = GetEFLAGS();
-    pContext->Frame.EFLAGS &= ~(UINT32)((1 << 0) | (1 << 2) | (1 << 4) | (1 << 6) | (1 << 7) | (1 << 10) | (1 << 11)); /* Reset Status Flags */
+    pContext->Frame.EFLAGS &= ~(UINT32)((1 << 0) | (1 << 2) | (1 << 4) | (1 << 6) | (1 << 7) | (1 << 10) | (1 << 11) | (3 << 12)); /* Reset Status Flags And IOPL */
     pContext->Frame.EFLAGS |= (1 << 9); /* Set Interrupt Enable Flag */
+    if (Flags & TASK_MODULE_BIT) pContext->Frame.EFLAGS |= (3 << 12); /* Set IOPL = 3 */
   }
   return pContext;
 }

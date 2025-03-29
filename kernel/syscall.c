@@ -2,7 +2,7 @@
 #include <kernel/memory.h>
 #include <kernel/task.h>
 
-void HandleSystemCall(UINTPTR *pResult, UINTPTR Function, SYSCALL_ARGUMENTS Arguments)
+void HandleSystemCall(SYSRET *pResult, SYSCALL Function, SYSCALL_ARGUMENTS Arguments)
 {
   const TASK *pCurrentTask = GetCurrentTask();
   if (!pCurrentTask)
@@ -10,7 +10,7 @@ void HandleSystemCall(UINTPTR *pResult, UINTPTR Function, SYSCALL_ARGUMENTS Argu
     *pResult = SYSRET_INVALID_CALLER;
     return;
   }
-  *pResult = SYSRET_UNKNOWN_FUNCTION;
+  *pResult = SYSRET_INVALID_FUNCTION;
   /* TODO: Handle System Calls */
   switch (Function)
   {
@@ -44,6 +44,36 @@ void HandleSystemCall(UINTPTR *pResult, UINTPTR Function, SYSCALL_ARGUMENTS Argu
       break;
     case SYSCALL_GET_PARENT_ID:
       *pResult = pCurrentTask->ParentID;
+      break;
+    case SYSCALL_CREATE_TASK:
+      /* TODO: Implement */
+      break;
+    case SYSCALL_MAP_MEMORY:
+      {
+        UINT MappingFlags = MAPPING_USER_MODE_BIT;
+        if (Arguments.C & MAP_MEMORY_READABLE) MappingFlags |= MAPPING_READABLE_BIT;
+        if (Arguments.C & MAP_MEMORY_WRITABLE) MappingFlags |= MAPPING_WRITABLE_BIT;
+        if (Arguments.C & MAP_MEMORY_EXECUTABLE) MappingFlags |= MAPPING_EXECUTABLE_BIT;
+        *pResult = (UINTPTR)MapFirstFreePages(Arguments.B, MappingFlags);
+      }
+      break;
+    case SYSCALL_MAP_DEVICE:
+      if ((pCurrentTask->Flags & TASK_MODULE_BIT) && Arguments.B && Arguments.C)
+      {
+        UINTPTR FirstPage = FindLastFreeVirtualPages(Arguments.B);
+        UINTPTR Mapping = (Arguments.C & PAGE_ADDRESS_MASK) | MAPPING_USER_MODE_BIT | MAPPING_PRESENT_BIT | MAPPING_EXTERNAL_BIT;
+        if (Arguments.C & MAP_MEMORY_READABLE) Mapping |= MAPPING_READABLE_BIT;
+        if (Arguments.C & MAP_MEMORY_WRITABLE) Mapping |= MAPPING_WRITABLE_BIT;
+        for (UINTPTR i = 0; i < Arguments.B; ++i) (void)SetPageMapping(FirstPage + i * PAGE_SIZE, Mapping + i * PAGE_SIZE);
+        *pResult = FirstPage;
+      }
+      else *pResult = 0;
+      break;
+    case SYSCALL_FREE_MAPPING:
+      /* TODO: Implement */
+      break;
+    case SYSCALL_SHARE_MAPPING:
+      /* TODO: Implement */
       break;
   }
 }

@@ -10,8 +10,6 @@ static UINTPTR NextFreePage;
 static volatile UINTPTR *const pPageDirectory = (void*)PAGE_ADDRESS_MASK;
 static volatile UINTPTR *const pPageTable = (void*)(~(UINTPTR)(PAGE_SIZE * PAGE_TABLE_SIZE - 1));
 
-extern void DebugPrint(UINT8 Prefix, UINTPTR Page);
-
 UINTPTR GetMemoryMap()
 {
   UINTPTR MemoryMap;
@@ -123,7 +121,6 @@ UINTPTR GetPageMapping(UINTPTR VirtualPage)
 
 BOOL SetPageMapping(UINTPTR VirtualPage, UINTPTR Mapping)
 {
-  //DebugPrint(Mapping ? 's' : 'c', VirtualPage);
   UINTPTR PageIndex = VirtualPage >> PAGE_SHIFT;
   UINTPTR TableIndex = PageIndex / PAGE_TABLE_SIZE;
   if (TableIndex == PAGE_TABLE_SIZE - 1) return FALSE; /* Refuse access to the Page Table Region */
@@ -143,7 +140,6 @@ BOOL SetPageMapping(UINTPTR VirtualPage, UINTPTR Mapping)
     InvalidatePage((UINTPTR)(void*)&pPageTable[TableIndex * PAGE_TABLE_SIZE]);
     NextFreePage = pPageTable[TableIndex * PAGE_TABLE_SIZE];
     for (UINTPTR i = 0; i < PAGE_TABLE_SIZE; ++i) pPageTable[TableIndex * PAGE_TABLE_SIZE + i] = 0;
-    DebugPrint('A', VirtualPage);
   }
   pPageTable[PageIndex] = Page;
   InvalidatePage(VirtualPage);
@@ -156,14 +152,12 @@ BOOL SetPageMapping(UINTPTR VirtualPage, UINTPTR Mapping)
   pPageTable[TableIndex * PAGE_TABLE_SIZE] = NextFreePage;
   NextFreePage = pPageDirectory[TableIndex] & PAGE_ADDRESS_MASK;
   pPageDirectory[TableIndex] = 0;
-  DebugPrint('F', VirtualPage);
   InvalidatePage((UINTPTR)(void*)&pPageTable[TableIndex * PAGE_TABLE_SIZE]);
   return TRUE;
 }
 
 BOOL MapFreePage(UINTPTR VirtualPage, UINT MappingFlags)
 {
-  DebugPrint('a', VirtualPage);
   if (!NextFreePage /* Out of Free Pages */
       || GetPageMapping(VirtualPage) /* The Page is already Mapped */
       || !SetPageMapping(VirtualPage, MAPPING_EXTERNAL_BIT)) return FALSE; /* The Page cannot be Mapped */
@@ -180,7 +174,6 @@ BOOL MapFreePage(UINTPTR VirtualPage, UINT MappingFlags)
 
 BOOL FreeMappedPage(UINTPTR VirtualPage)
 {
-  DebugPrint('f', VirtualPage);
   if (VirtualPage >= (UINTPTR)pPageTable) return FALSE; /* The Page Table can NOT be freed with this function */
   UINTPTR Mapping = GetPageMapping(VirtualPage);
   if (!(Mapping & MAPPING_PRESENT_BIT)) return FALSE;

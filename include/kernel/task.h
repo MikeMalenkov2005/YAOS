@@ -39,7 +39,7 @@ void InitTasks();
 
 const TASK *GetTaskByID(UINT TaskID);
 
-TASK_CONTEXT *CreateTaskContext(SIZE_T StackSize);
+TASK_CONTEXT *CreateTaskContext(SIZE_T StackSize, UINT Flags);
 
 void DeleteTaskContext(TASK_CONTEXT *pContext);
 

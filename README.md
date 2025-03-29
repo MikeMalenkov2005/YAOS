@@ -9,8 +9,14 @@ Microkernel
 Being a microkernel YAOS implements only **processor initialization**,
 **memory management**, **program loading**, **multitasking** and **message passing**.
 
-Everything else is provided via **modules**, which run in usermode, but have
-special permissions (like port and memory mapped io).
+Everything else is provided via **system modules**, which run in usermode,
+but have special permissions (like port and memory mapped io).
+
+System Modules
+--------------
+
+- **idle.sys** is the first module to be loaded by YAOS. It acts as a parent for
+all other modules and is important for task switching.
 
 Supported Targets
 -----------------
@@ -38,7 +44,6 @@ TODO List
 ---------
 
 - Add more system calls
-- Create a VGA driver
 - Create a PS/2 driver
 - Create a PCI driver
 - Create a FDD driver

@@ -1,14 +1,13 @@
-#include <sys/syscall.h>
+#include <sys/yaos.h>
 
-#define SCREEN ((UINT16*)(void*)0xB8000)
-
-const static char szMessage[] = "Idle loaded";
+const static UINT8 Payload[] = "\x0A\x08\x01\x01\x07\x02\x01\x0ESystem Loaded!";
 
 void Init()
 {
-  UINTPTR TaskID = InvokeSystemCall(SYSCALL_GET_TASK_ID, 0, 0, 0);
-  for (SIZE_T i = 0; i < sizeof(szMessage); ++i) SCREEN[TaskID * 80 + i] = (UINT16)szMessage[i] | 0x200;
-  SCREEN[TaskID * 80 + sizeof(szMessage)] = (TaskID + '0') | 0x200;
+  MESSAGE Message = { 0 };
+  Message.ReceiverID = 1;
+  for (UINT i = 0; i < sizeof(Payload); ++i) Message.Payload[i] = Payload[i];
+  SendMessage(&Message);
   for(;;);
 }
 
