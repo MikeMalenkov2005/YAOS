@@ -11,6 +11,7 @@
 inline static void Terminate()
 {
   (void)InvokeSystemCall(SYSCALL_TERMINATE, 0, 0, 0);
+  for (;;);
 }
 
 inline static SYSRET SendMessage(MESSAGE *pMessage)
@@ -43,24 +44,44 @@ inline static UINT GetParentID()
   return (UINT)InvokeSystemCall(SYSCALL_GET_PARENT_ID, 0, 0, 0);
 }
 
-inline static void* MapMemory(void *pReserved, SIZE_T PageCount, UINT Flags)
+inline static UINT GetLeaderID()
 {
-  return (void*)(UINTPTR)InvokeSystemCall(SYSCALL_MAP_MEMORY, (UINTPTR)pReserved, PageCount, Flags);
+  return (UINT)InvokeSystemCall(SYSCALL_GET_LEADER_ID, 0, 0, 0);
 }
 
-inline static void* MapDevice(void *pReserved, SIZE_T PageCount, UINTPTR Mapping)
+inline static UINT CreateThread(void (*pfnEntry)(void), SIZE_T StackSize)
 {
-  return (void*)(UINTPTR)InvokeSystemCall(SYSCALL_MAP_DEVICE, (UINTPTR)pReserved, PageCount, Mapping);
+  return (UINT)InvokeSystemCall(SYSCALL_CREATE_THREAD, (UINTPTR)(void*)pfnEntry, StackSize, 0);
 }
 
-inline static SYSRET FreeMapping(void *pStart, SIZE_T PageCount)
+inline static void* MapMemory(void *pReserved, SIZE_T Size, UINT Flags)
 {
-  return InvokeSystemCall(SYSCALL_FREE_MAPPING, (UINTPTR)pStart, PageCount, 0);
+  return (void*)(UINTPTR)InvokeSystemCall(SYSCALL_MAP_MEMORY, (UINTPTR)pReserved, Size, Flags);
 }
 
-inline static SYSRET ShareMapping(void *pStart, SIZE_T PageCount, UINT TaskID)
+inline static void* MapDevice(void *pReserved, SIZE_T Size, UINTPTR Mapping)
 {
-  return InvokeSystemCall(SYSCALL_SHARE_MAPPING, (UINTPTR)pStart, PageCount, TaskID);
+  return (void*)(UINTPTR)InvokeSystemCall(SYSCALL_MAP_DEVICE, (UINTPTR)pReserved, Size, Mapping);
+}
+
+inline static SYSRET FreeMapping(void *pStart, SIZE_T Size)
+{
+  return InvokeSystemCall(SYSCALL_FREE_MAPPING, (UINTPTR)pStart, Size, 0);
+}
+
+inline static SYSRET ShareMapping(void *pStart, SIZE_T Size, UINT TaskID)
+{
+  return InvokeSystemCall(SYSCALL_SHARE_MAPPING, (UINTPTR)pStart, Size, TaskID);
+}
+
+inline static SYSRET WaitIRQ(UINTPTR IRQ)
+{
+  return InvokeSystemCall(SYSCALL_WAIT_IRQ, IRQ, 0, 0);
+}
+
+inline static SYSRET EndIRQ()
+{
+  return InvokeSystemCall(SYSCALL_END_IRQ, 0, 0, 0);
 }
 
 #endif

@@ -6,6 +6,8 @@
 #define INVALID_TASK_ID (~(UINT)0)
 
 #define TASK_MODULE_BIT   (1 << 0)
+#define TASK_THREAD_BIT   (1 << 1)
+#define TASK_WAIT_IRQ_BIT (1 << 2)
 
 /* Can be changed with a compiler options */
 #ifndef TASK_LIMIT
@@ -31,6 +33,7 @@ struct TASK
   const MESSAGE_QUEUE *pMessageQueue;
   UINTPTR WaitInfo;
   UINT ParentID;
+  UINT GroupID;
   UINT TaskID;
   UINT Flags;
 };
@@ -38,6 +41,8 @@ struct TASK
 void InitTasks();
 
 const TASK *GetTaskByID(UINT TaskID);
+
+const TASK *GetMainTask(UINT GroupID);
 
 TASK_CONTEXT *CreateTaskContext(SIZE_T StackSize, UINT Flags);
 
@@ -62,5 +67,11 @@ BOOL SendTaskMessage(MESSAGE *pMessage);
 BOOL PeekTaskMessage(MESSAGE *pMessage);
 
 BOOL ReceiveTaskMessage(MESSAGE *pMessage, BOOL bWait);
+
+BOOL WaitTaskIRQ(UINTPTR IRQ);
+
+BOOL BeginTaskIRQ(UINTPTR IRQ);
+
+void EndTaskIRQ();
 
 #endif

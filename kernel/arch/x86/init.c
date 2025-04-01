@@ -1,3 +1,4 @@
+#include "kernel/memory.h"
 #include <kernel/arch/x86/init.h>
 #include <kernel/arch/x86/task.h>
 #include <kernel/arch/x86/mmu.h>
@@ -68,7 +69,6 @@ void InitArch(UINT32 BootMagic, BOOT_INFO *pBootInfo, UINT32 SystemStack, INTERR
   InitTasks();
   SetTaskFrame(&Frame);
   SetArchInfo(EM_386, COFF_MACHINE_I386, FALSE);
-  SetPageMapping(0xB8000, GetPageMapping(0xB8000) | MAPPING_USER_MODE_BIT);
   /* Create a Task for Each Module */
   for (UINT32 i = 0; i < ModulesCount; ++i)
   {

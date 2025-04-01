@@ -14,7 +14,7 @@ MESSAGE_QUEUE *CreateMessageQueue()
 
 void DeleteMessageQueue(MESSAGE_QUEUE *pQueue)
 {
-  (void)FreeMappedPages((UINTPTR)pQueue, PAGE_ROUND_UP(sizeof(MESSAGE_QUEUE)) / PAGE_SIZE);
+  if (pQueue) (void)FreeMappedPages((UINTPTR)pQueue, PAGE_ROUND_UP(sizeof(MESSAGE_QUEUE)) / PAGE_SIZE);
 }
 
 BOOL PushMessage(MESSAGE_QUEUE *pQueue, const MESSAGE *pMessage)

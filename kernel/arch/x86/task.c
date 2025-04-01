@@ -36,7 +36,7 @@ TASK_CONTEXT *CreateTaskContext(SIZE_T StackSize, UINT Flags)
 
 void DeleteTaskContext(TASK_CONTEXT *pContext)
 {
-  (void)FreeMappedPages((UINTPTR)pContext, PAGE_ROUND_UP(sizeof(TASK_CONTEXT)) / PAGE_SIZE);
+  if (pContext) (void)FreeMappedPages((UINTPTR)pContext, PAGE_ROUND_UP(sizeof(TASK_CONTEXT)) / PAGE_SIZE);
 }
 
 void SaveTaskContext(TASK_CONTEXT *pContext)

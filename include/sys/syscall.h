@@ -14,16 +14,20 @@ typedef UINTPTR SYSCALL;
 #define SYSCALL_PEEK_MESSAGE  4   /* (MESSAGE*, 0, 0) */
 /* Task Management */
 #define SYSCALL_GET_TASK_ID   5   /* (0, 0, 0) */
-#define SYSCALL_GET_PARENT_ID 6   /* (0, 0, 0) */
-#define SYSCALL_CREATE_TASK   7   /* NOT IMPLEMENTED */
+#define SYSCALL_GET_GROUP_ID  6   /* (0, 0, 0) */
+#define SYSCALL_GET_PARENT_ID 7   /* (0, 0, 0) */
+#define SYSCALL_GET_LEADER_ID 8   /* (0, 0, 0) */
+#define SYSCALL_CREATE_THREAD 9   /* (EntryPoint, StackSize, 0) */
 /* Memory Management */
-#define SYSCALL_MAP_MEMORY    10  /* (Reserved, PageCount, Flags) */
-#define SYSCALL_MAP_DEVICE    11  /* (Reserved, PageCount, Mapping) System Module Only */
-#define SYSCALL_FREE_MAPPING  12  /* (VAddr, PageCount, 0) */
-#define SYSCALL_SHARE_MAPPING 13  /* (VAddr, PageCount, TaskID) */
+#define SYSCALL_MAP_MEMORY    10  /* (Reserved, Size, Flags) */
+#define SYSCALL_MAP_DEVICE    11  /* (Reserved, Size, Mapping) System Module Only */
+#define SYSCALL_FREE_MAPPING  12  /* (VAddr, Size, 0) */
+#define SYSCALL_SHARE_MAPPING 13  /* (VAddr, Size, TaskID) */
 /* Device IRQ Handling */
-#define SYSCALL_LISTEN_IRQ    20  /* (IRQ, pInfo, InfoSize) System Module Only */
-#define SYSCALL_IGNORE_IRQ    21  /* (IRQ, pInfo, InfoSize) System Module Only */
+#define SYSCALL_WAIT_IRQ      30  /* (IRQ, 0, 0) System Module Only */
+#define SYSCALL_END_IRQ       31  /* (0, 0, 0) System Module Only */
+
+/* Create Task Flags (NOT IMPLEMENTED) */
 
 /* Map Memory Flags */
 #define MAP_MEMORY_WRITABLE   1

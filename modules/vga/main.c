@@ -42,13 +42,14 @@ inline static void ClearScreen()
 
 inline static void Scroll(UINT8 Lines)
 {
-  if (Lines < 80)
+  if (Lines < 25)
   {
     UINT16 Index = 0;
-    UINT16 Length = Lines * 80;
-    for (;Index < Length; ++Index) pTextScreen[Index] = pTextScreen[Index + Length];
+    UINT16 Chars = Lines * 80;
+    UINT16 Length = 2000 - Chars;
+    for (;Index < Length; ++Index) pTextScreen[Index] = pTextScreen[Index + Chars];
     for (;Index < 2000; ++Index) pTextScreen[Index] = (UINT16)Color << 8;
-    if (Cursor > Length) Cursor -= Length;
+    if (Cursor > Chars) Cursor -= Chars;
     else Cursor = Cursor % 80;
     UpdateCursor();
   }
@@ -58,7 +59,7 @@ inline static void Scroll(UINT8 Lines)
 void MessageLoop()
 {
   MESSAGE Message = { 0 };
-  while ((~Message.SenderID || Message.Payload[0]) && !WaitMessage(&Message))
+  while (WaitMessage(&Message) == SYSRET_OK)
   {
     for (UINT i = 0; i < MESSAGE_SIZE && Message.Payload[i]; ++i)
     {
@@ -152,7 +153,7 @@ void MessageLoop()
 void Init()
 {
   Color = 7;
-  pTextScreen = MapDevice(NULL, 1, 0xB8000 | MAP_MEMORY_WRITABLE | MAP_MEMORY_READABLE);
+  pTextScreen = MapDevice(NULL, 0x1000, 0xB8000 | MAP_MEMORY_WRITABLE | MAP_MEMORY_READABLE);
   EnableCursor(14, 15);
   ClearScreen();
   MessageLoop();

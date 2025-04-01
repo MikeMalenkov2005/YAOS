@@ -1,3 +1,4 @@
+#include "sys/syscall.h"
 #include <kernel/syscall.h>
 #include <kernel/memory.h>
 #include <kernel/task.h>
@@ -45,35 +46,81 @@ void HandleSystemCall(SYSRET *pResult, SYSCALL Function, SYSCALL_ARGUMENTS Argum
     case SYSCALL_GET_PARENT_ID:
       *pResult = pCurrentTask->ParentID;
       break;
-    case SYSCALL_CREATE_TASK:
-      /* TODO: Implement */
+    case SYSCALL_GET_LEADER_ID:
+      *pResult = (pCurrentTask->Flags & TASK_THREAD_BIT) ? GetMainTask(pCurrentTask->GroupID)->TaskID : pCurrentTask->TaskID;
+      break;
+    case SYSCALL_CREATE_THREAD:
+      {
+        UINT Flags = pCurrentTask->Flags | TASK_THREAD_BIT;
+        const TASK *pNewTask = CreateTask(Arguments.B, Flags);
+        if (pNewTask)
+        {
+          SetCurrentUserIP(Arguments.A);
+          SwitchTask(TRUE);
+          *pResult = pNewTask->TaskID;
+        }
+        else *pResult = INVALID_TASK_ID;
+      }
       break;
     case SYSCALL_MAP_MEMORY:
+      if (Arguments.B)
       {
+        SIZE_T PageCount = PAGE_ROUND_UP(Arguments.B) >> PAGE_SHIFT;
         UINT MappingFlags = MAPPING_USER_MODE_BIT;
         if (Arguments.C & MAP_MEMORY_READABLE) MappingFlags |= MAPPING_READABLE_BIT;
         if (Arguments.C & MAP_MEMORY_WRITABLE) MappingFlags |= MAPPING_WRITABLE_BIT;
         if (Arguments.C & MAP_MEMORY_EXECUTABLE) MappingFlags |= MAPPING_EXECUTABLE_BIT;
-        *pResult = (UINTPTR)MapFirstFreePages(Arguments.B, MappingFlags);
+        *pResult = (UINTPTR)MapFirstFreePages(PageCount, MappingFlags);
       }
+      else *pResult = 0;
       break;
     case SYSCALL_MAP_DEVICE:
       if ((pCurrentTask->Flags & TASK_MODULE_BIT) && Arguments.B && Arguments.C)
       {
-        UINTPTR FirstPage = FindLastFreeVirtualPages(Arguments.B);
+        SIZE_T PageCount = PAGE_ROUND_UP(Arguments.B) >> PAGE_SHIFT;
+        UINTPTR FirstPage = FindLastFreeVirtualPages(PageCount);
         UINTPTR Mapping = (Arguments.C & PAGE_ADDRESS_MASK) | MAPPING_USER_MODE_BIT | MAPPING_PRESENT_BIT | MAPPING_EXTERNAL_BIT;
         if (Arguments.C & MAP_MEMORY_READABLE) Mapping |= MAPPING_READABLE_BIT;
         if (Arguments.C & MAP_MEMORY_WRITABLE) Mapping |= MAPPING_WRITABLE_BIT;
-        for (UINTPTR i = 0; i < Arguments.B; ++i) (void)SetPageMapping(FirstPage + i * PAGE_SIZE, Mapping + i * PAGE_SIZE);
+        for (UINTPTR i = 0; i < PageCount; ++i) (void)SetPageMapping(FirstPage + i * PAGE_SIZE, Mapping + i * PAGE_SIZE);
         *pResult = FirstPage;
       }
       else *pResult = 0;
       break;
     case SYSCALL_FREE_MAPPING:
-      /* TODO: Implement */
+      if (!(Arguments.A & PAGE_FLAGS_MASK) && Arguments.B)
+      {
+        SIZE_T PageCount = PAGE_ROUND_UP(Arguments.B) >> PAGE_SHIFT;
+        UINT Flags = GetPageMapping(Arguments.A) & PAGE_FLAGS_MASK;
+        *pResult = (Flags & MAPPING_USER_MODE_BIT) ? SYSRET_OK : SYSRET_INVALID_ARGUMENT;
+        for (SIZE_T i = 0; i < PageCount && *pResult == SYSRET_OK; ++i)
+        {
+          if ((GetPageMapping(Arguments.A + i * PAGE_SIZE) & PAGE_FLAGS_MASK) != Flags)
+          {
+            *pResult = SYSRET_INVALID_ARGUMENT;
+          }
+        }
+        if (*pResult == SYSRET_OK)
+        {
+          if (Flags & MAPPING_EXTERNAL_BIT)
+          {
+            for (SIZE_T i = 0; i < PageCount; ++i) (void)SetPageMapping(Arguments.A + i * PageCount, 0);
+          }
+          else (void)FreeMappedPages(Arguments.A, PageCount);
+        }
+      }
+      else *pResult = SYSRET_INVALID_ARGUMENT;
       break;
     case SYSCALL_SHARE_MAPPING:
       /* TODO: Implement */
+      break;
+    case SYSCALL_WAIT_IRQ:
+      *pResult = SYSRET_OK;
+      if (!WaitTaskIRQ(Arguments.A)) *pResult = SYSRET_INVALID_CALLER;
+      break;
+    case SYSCALL_END_IRQ:
+      *pResult = SYSRET_OK;
+      EndTaskIRQ();
       break;
   }
 }

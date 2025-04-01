@@ -17,7 +17,6 @@ inline static UINTPTR ReadCR2()
 
 void HandleInterrupt(INTERRUPT_FRAME Frame)
 {
-  /* TODO: Handle MORE Interrupts */
   UINT ISRIndex = Frame.ISRIndex;
   SetTaskFrame(&Frame);
   if (ISRIndex < 32)
@@ -26,11 +25,12 @@ void HandleInterrupt(INTERRUPT_FRAME Frame)
     DebugPrint('C', Frame.ErrorCode);
     DebugPrint('R', ReadCR2());
     DebugPrint('I', Frame.EIP);
+    DebugPrint((GetCurrentTask()->Flags & TASK_THREAD_BIT) ? 'T' : 'P', GetCurrentTask()->TaskID);
     KernelPanic("EXCEPTION");
   }
-  if (ISRIndex == 32) HandleTimerTick();
-  if (ISRIndex == 128) HandleSystemCall((void*)&Frame.EAX, Frame.EAX,
-      (SYSCALL_ARGUMENTS){Frame.EBX, Frame.ECX, Frame.EDX});
+  else if (ISRIndex == 32) HandleTimerTick();
+  else if (ISRIndex < 48) (void)BeginTaskIRQ(ISRIndex - 32);
+  else if (ISRIndex == 128) HandleSystemCall((void*)&Frame.EAX, Frame.EAX, (SYSCALL_ARGUMENTS){Frame.EBX, Frame.ECX, Frame.EDX});
   if (ISRIndex >= 32 && ISRIndex < 48)
   {
     if (ISRIndex >= 40)

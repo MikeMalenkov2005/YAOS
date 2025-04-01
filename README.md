@@ -43,8 +43,8 @@ The `make clean` command deletes everything created during the build process.
 TODO List
 ---------
 
+- **Process multiple IRQs at once!!!**
 - Add more system calls
-- Create a PS/2 driver
 - Create a PCI driver
 - Create a FDD driver
 - Create a HDD driver
