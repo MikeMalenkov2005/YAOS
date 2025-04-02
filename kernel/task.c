@@ -3,10 +3,9 @@
 
 static TASK Tasks[TASK_LIMIT];
 static TASK *pCurrentTask = NULL;
+static TASK *pCurrentIRQ = NULL;
 static UINT NextGroupID = 0;
 static UINT NextTaskID = 0;
-
-static TASK *pTaskIRQ = NULL;
 
 void InitTasks()
 {
@@ -53,7 +52,7 @@ const TASK *GetCurrentTask()
 
 const TASK *CreateTask(SIZE_T StackSize, UINT Flags)
 {
-  if (pTaskIRQ) return NULL;
+  if (pCurrentIRQ) return NULL;
   TASK *pTask = NULL;
   for (UINT i = 0; i < TASK_LIMIT && NextTaskID != INVALID_TASK_ID; ++i)
   {
@@ -103,7 +102,8 @@ const TASK *CreateTask(SIZE_T StackSize, UINT Flags)
 
 BOOL DeleteTask(const TASK *pTask)
 {
-  if (!pTask || pTask == pTaskIRQ) return FALSE;
+  /* TODO: add posibility to delete while IRQ is active */
+  if (!pTask || pCurrentIRQ) return FALSE;
   TASK *pTaskToDelete = (TASK*)pTask;
   if (!(pTaskToDelete->Flags & TASK_THREAD_BIT))
   {
@@ -143,7 +143,8 @@ BOOL DeleteTask(const TASK *pTask)
 
 void SwitchTask(BOOL bReverse)
 {
-  if (!pTaskIRQ && pCurrentTask && pCurrentTask->pNext != pCurrentTask)
+  /* TODO: meybe add IRQ task switching ? */
+  if (!pCurrentIRQ && pCurrentTask && pCurrentTask->pNext != pCurrentTask)
   {
     SaveTaskContext(pCurrentTask->pContext);
     do
@@ -195,29 +196,42 @@ BOOL ReceiveTaskMessage(MESSAGE *pMessage, BOOL bWait)
 
 BOOL WaitTaskIRQ(UINTPTR IRQ)
 {
-  TASK *pTask = pTaskIRQ ? pTaskIRQ : pCurrentTask;
+  TASK *pTask = pCurrentIRQ ? pCurrentIRQ : pCurrentTask;
   if (!pTask || !(pTask->Flags & TASK_MODULE_BIT)) return FALSE;
   EndTaskIRQ();
   if (pTask == pCurrentTask) SwitchTask(FALSE);
   if (pTask == pCurrentTask) return FALSE;
   pTask->WaitInfo = IRQ;
   pTask->Flags |= TASK_WAIT_IRQ_BIT;
-  //pTask->pNext->pPrevious = pTask->pPrevious;
-  //pTask->pPrevious->pNext = pTask->pNext;
+  ((TASK*)pTask->pNext)->pPrevious = pTask->pPrevious;
+  ((TASK*)pTask->pPrevious)->pNext = pTask->pNext;
+  pTask->pNext = NULL;
+  pTask->pPrevious = NULL;
   return TRUE;
 }
 
+void DebugPrint(UINT8 Prefix, UINTPTR Page);
+
 BOOL BeginTaskIRQ(UINTPTR IRQ)
 {
-  if (pTaskIRQ) return FALSE;
   for (UINT i = 0; i < TASK_LIMIT; ++i)
   {
     if (Tasks[i].WaitInfo == IRQ && (Tasks[i].Flags & TASK_WAIT_IRQ_BIT))
     {
-      pTaskIRQ = &Tasks[i];
-      SaveTaskContext(pCurrentTask->pContext);
-      SetMemoryMap(pTaskIRQ->MemoryMap);
-      LoadTaskContext(pTaskIRQ->pContext);
+      if (!pCurrentIRQ)
+      {
+        pCurrentIRQ = &Tasks[i];
+        SaveTaskContext(pCurrentTask->pContext);
+        SetMemoryMap(pCurrentIRQ->MemoryMap);
+        LoadTaskContext(pCurrentIRQ->pContext);
+      }
+      else if (!Tasks[i].pPrevious && pCurrentIRQ != &Tasks[i])
+      {
+        TASK *pLastIRQ = pCurrentIRQ;
+        while (pLastIRQ->pNext) pLastIRQ = (TASK*)pLastIRQ->pNext;
+        pLastIRQ->pNext = &Tasks[i];
+        Tasks[i].pPrevious = pLastIRQ;
+      }
       return TRUE;
     }
   }
@@ -226,14 +240,25 @@ BOOL BeginTaskIRQ(UINTPTR IRQ)
 
 void EndTaskIRQ()
 {
-  if (pTaskIRQ)
+  if (pCurrentIRQ)
   {
-    pTaskIRQ->WaitInfo = 0;
-    pTaskIRQ->Flags &= ~TASK_WAIT_IRQ_BIT;
-    SaveTaskContext(pTaskIRQ->pContext);
-    SetMemoryMap(pCurrentTask->MemoryMap);
-    LoadTaskContext(pCurrentTask->pContext);
-    pTaskIRQ = NULL;
+    TASK *pTask = pCurrentIRQ;
+    TASK *pNextTask = pCurrentTask;
+    pCurrentIRQ = (TASK*)pTask->pNext;
+    pTask->WaitInfo = 0;
+    pTask->Flags &= ~TASK_WAIT_IRQ_BIT;
+    pTask->pNext = pCurrentTask;
+    pTask->pPrevious = pCurrentTask->pPrevious;
+    ((TASK*)pTask->pNext)->pPrevious = pTask;
+    ((TASK*)pTask->pPrevious)->pNext = pTask;
+    if (pCurrentIRQ)
+    {
+      pCurrentIRQ->pPrevious = NULL;
+      pNextTask = pCurrentIRQ;
+    }
+    SaveTaskContext(pTask->pContext);
+    SetMemoryMap(pNextTask->MemoryMap);
+    LoadTaskContext(pNextTask->pContext);
   }
 }
 
