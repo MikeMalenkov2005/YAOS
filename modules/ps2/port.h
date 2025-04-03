@@ -1,20 +1,37 @@
-#ifndef PORT_H
-#define PORT_H
+#ifndef PS2_PORT_H
+#define PS2_PORT_H
 
 #include <types.h>
 
 #define BUFFER_SIZE  0x1000
+
+#define CMD_SIZE_INFO 0
+#define CMD_MAIN_BYTE 1
+
+typedef struct PS2_COMMAND
+{
+  UINT SenderID;
+  UINT8 Info[16];
+} PS2_COMMAND;
 
 typedef struct PS2_PORT
 {
   UINT Head;
   UINT Tail;
   UINT8 *pBuffer;
+  UINT Index;
+  PS2_COMMAND Command;
 } PS2_PORT;
 
-BOOL InitPort(PS2_PORT *pPort, UINTPTR IRQ);
+UINT InitPS2();
 
-SIZE_T ReadPort(PS2_PORT *pPort, UINT8 *pBuffer, SIZE_T Size);
+BOOL InitPort(PS2_PORT *pPort);
+
+SIZE_T ReadInputBuffer(PS2_PORT *pPort, UINT8 *pBuffer, SIZE_T Size);
+
+BOOL SendCommand(PS2_PORT *pPort, const PS2_COMMAND *pCommand);
+
+void ClearInputBuffer(PS2_PORT *pPort);
 
 #endif
 

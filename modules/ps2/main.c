@@ -1,7 +1,7 @@
-#include "port.h"
-
 #include <kernel/arch/x86/pio.h>
 #include <sys/yaos.h>
+
+#include "port.h"
 
 static PS2_PORT Port;
 
@@ -12,13 +12,30 @@ void MessageLoop()
   {
     switch (Message.Payload[0])
     {
-      case 0: /* Read */
-        for (UINT i = 0; i < MESSAGE_SIZE; ++i) Message.Payload[i] = 0;
-        Message.Payload[1] = ReadPort(&Port, Message.Payload + 2, MESSAGE_SIZE - 2);
+      case 1: /* Read Input Buffer (Size < 31) */
+        for (UINT i = 2; i < MESSAGE_SIZE; ++i) Message.Payload[i] = 0;
+        Message.Payload[1] = ReadInputBuffer(&Port, Message.Payload + 2, Message.Payload[1] < MESSAGE_SIZE - 2 ? Message.Payload[1] : MESSAGE_SIZE - 2);
         Message.ReceiverID = Message.SenderID;
         SendMessage(&Message);
         break;
-      case 1: /* Write */
+      case 2: /* Send Command (Response) */
+        {
+          PS2_COMMAND Command = { .SenderID = Message.SenderID };
+          Command.Info[CMD_SIZE_INFO] = Message.Payload[1];
+          for (UINT i = CMD_MAIN_BYTE; i < sizeof(Command.Info); ++i)
+          {
+            Command.Info[i] = Message.Payload[i + 1];
+          }
+          if (!SendCommand(&Port, &Command))
+          {
+            for (UINT i = 1; i < MESSAGE_SIZE; ++i) Message.Payload[i] = 0;
+            Message.ReceiverID = Message.SenderID;
+            SendMessage(&Message);
+          }
+        }
+        break;
+      case 3: /* Clear Input Buffer */
+        ClearInputBuffer(&Port);
         break;
     }
   }
@@ -26,15 +43,9 @@ void MessageLoop()
 
 void Init()
 {
-  if (InitPort(&Port, 1))
+  Port.Index = 0;
+  if (InitPS2() && InitPort(&Port))
   {
-    for (;;)
-    {
-      MESSAGE Message = { .ReceiverID = 1 };
-      Message.Payload[0] = 1;
-      Message.Payload[1] = ReadPort(&Port, Message.Payload + 2, MESSAGE_SIZE - 2);
-      if (Message.Payload[1]) SendMessage(&Message);
-    }
     MessageLoop();
   }
   Terminate();

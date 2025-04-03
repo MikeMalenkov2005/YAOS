@@ -1,12 +1,11 @@
 ROOTDIR = ../..
 include $(ROOTDIR)/config.mk
 
-OBJECTS += arch/$(ARCH).o
 LDFLAGS += -e Init
 
 .PHONY: clean
 
-$(ROOTDIR)/ps2.sys: $(OBJECTS)
+$(ROOTDIR)/game.sys: $(OBJECTS)
 	$(LD) $(LDFLAGS) -o $@ $^
 
 $(OBJECTS): %.o: %.c

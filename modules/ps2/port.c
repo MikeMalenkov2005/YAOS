@@ -1,55 +1,27 @@
-#include "port.h"
+#include "arch.h"
 
-#include <kernel/arch/x86/pio.h>
-#include <sys/yaos.h>
-
-typedef struct HANDLER_INFO
-{
-  PS2_PORT *pPort;
-  UINTPTR IRQ;
-} HANDLER_INFO;
-
-void PortHandlerThread()
+void ThreadInit()
 {
   MESSAGE Message;
   if (WaitMessage(&Message) == SYSRET_OK)
   {
-    HANDLER_INFO *pInfo = (void*)Message.Payload;
-    while (WaitIRQ(pInfo->IRQ) == SYSRET_OK)
-    {
-      while (ReadPort8(0x64) & 1) /* While There are Bytes to Read */
-      {
-        UINT8 Byte = ReadPort8(0x60);
-        if (~pInfo->pPort->Head)
-        {
-          pInfo->pPort->pBuffer[pInfo->pPort->Head++] = Byte;
-          if (pInfo->pPort->Head == BUFFER_SIZE) pInfo->pPort->Head = 0;
-          if (pInfo->pPort->Head == pInfo->pPort->Tail) pInfo->pPort->Head = ~0;
-        }
-        else
-        {
-          pInfo->pPort->pBuffer[pInfo->pPort->Tail++] = Byte;
-          if (pInfo->pPort->Tail == BUFFER_SIZE) pInfo->pPort->Tail = 0;
-        }
-      }
-    }
+    HandlePortIRQs(*(PS2_PORT**)(void*)Message.Payload);
   }
   Terminate();
 }
 
-BOOL InitPort(PS2_PORT *pPort, UINTPTR IRQ)
+BOOL InitPort(PS2_PORT *pPort)
 {
+  if (pPort->Index > 1) return FALSE;
   if (pPort && (pPort->pBuffer = MapMemory(NULL, BUFFER_SIZE, MAP_MEMORY_READABLE | MAP_MEMORY_WRITABLE)))
   {
     pPort->Head = 0;
     pPort->Tail = 0;
-    UINT ThreadID = CreateThread(PortHandlerThread, 0);
+    UINT ThreadID = CreateThread(ThreadInit, 0);
     if (~ThreadID)
     {
       MESSAGE Message = { .ReceiverID = ThreadID };
-      HANDLER_INFO *pInfo = (void*)Message.Payload;
-      pInfo->pPort = pPort;
-      pInfo->IRQ = IRQ;
+      *(PS2_PORT**)(void*)Message.Payload = pPort;
       SendMessage(&Message);
       return TRUE;
     }
@@ -59,7 +31,7 @@ BOOL InitPort(PS2_PORT *pPort, UINTPTR IRQ)
   return FALSE;
 }
 
-SIZE_T ReadPort(PS2_PORT *pPort, UINT8 *pBuffer, SIZE_T Size)
+SIZE_T ReadInputBuffer(PS2_PORT *pPort, UINT8 *pBuffer, SIZE_T Size)
 {
   for (SIZE_T i = 0; i < Size; ++i)
   {
@@ -69,5 +41,22 @@ SIZE_T ReadPort(PS2_PORT *pPort, UINT8 *pBuffer, SIZE_T Size)
     if (pPort->Tail == BUFFER_SIZE) pPort->Tail = 0;
   }
   return Size;
+}
+
+BOOL SendCommand(PS2_PORT *pPort, const PS2_COMMAND *pCommand)
+{
+  if (!(pCommand->Info[CMD_SIZE_INFO] & 15) || (pPort->Command.Info[CMD_SIZE_INFO] & 15)) return FALSE;
+  for (UINT8 i = 0; i < (pCommand->Info[CMD_SIZE_INFO] & 15); ++i)
+  {
+    if (!SendByte(pPort->Index, pCommand->Info[i + 1])) return FALSE;
+  }
+  pPort->Command = *pCommand;
+  return TRUE;
+}
+
+void ClearInputBuffer(PS2_PORT *pPort)
+{
+  pPort->Head = 0;
+  pPort->Tail = 0;
 }
 

@@ -24,6 +24,7 @@ void HandleSystemCall(SYSRET *pResult, SYSCALL Function, SYSCALL_ARGUMENTS Argum
       if (CheckUserAccess((void*)Arguments.A, sizeof(MESSAGE)))
       {
         MESSAGE Message = *(MESSAGE*)(void*)Arguments.A;
+        Message.SenderID = pCurrentTask->TaskID;
         *pResult = SendTaskMessage(&Message) ? SYSRET_OK : SYSRET_UNAVAILABLE_TASK;
       } /* Probobly should segfault otherwize */
       break;
