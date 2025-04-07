@@ -7,6 +7,8 @@
 
 BOOL SendByte(UINT PS2PortIndex, UINT8 Byte);
 
+void ReceiveByte(PS2_PORT *pPort, UINT8 Byte);
+
 void HandlePortIRQs(PS2_PORT *pPort);
 
 #endif

@@ -51,7 +51,7 @@ inline static UINT GetLeaderID()
 
 inline static UINT CreateThread(void (*pfnEntry)(void), SIZE_T StackSize)
 {
-  return (UINT)InvokeSystemCall(SYSCALL_CREATE_THREAD, (UINTPTR)(void*)pfnEntry, StackSize, 0);
+  return (UINT)InvokeSystemCall(SYSCALL_CREATE_TASK, (UINTPTR)(void*)pfnEntry, StackSize, 0);
 }
 
 inline static void* MapMemory(void *pReserved, SIZE_T Size, UINT Flags)

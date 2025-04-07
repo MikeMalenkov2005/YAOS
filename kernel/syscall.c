@@ -50,7 +50,7 @@ void HandleSystemCall(SYSRET *pResult, SYSCALL Function, SYSCALL_ARGUMENTS Argum
     case SYSCALL_GET_LEADER_ID:
       *pResult = (pCurrentTask->Flags & TASK_THREAD_BIT) ? GetMainTask(pCurrentTask->GroupID)->TaskID : pCurrentTask->TaskID;
       break;
-    case SYSCALL_CREATE_THREAD:
+    case SYSCALL_CREATE_TASK:
       {
         UINT Flags = pCurrentTask->Flags | TASK_THREAD_BIT;
         const TASK *pNewTask = CreateTask(Arguments.B, Flags);

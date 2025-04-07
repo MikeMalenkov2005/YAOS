@@ -63,21 +63,7 @@ void HandlePortIRQs(PS2_PORT *pPort)
   {
     while (ReadPort8(0x64) & 1) /* While There are Bytes to Read */
     {
-      UINT8 Byte = ReadPort8(0x60);
-      if (Byte && ~Byte)
-      {
-        if (~pPort->Head)
-        {
-          pPort->pBuffer[pPort->Head++] = Byte;
-          if (pPort->Head == BUFFER_SIZE) pPort->Head = 0;
-          if (pPort->Head == pPort->Tail) pPort->Head = ~0;
-        }
-        else
-        {
-          pPort->pBuffer[pPort->Tail++] = Byte;
-          if (pPort->Tail == BUFFER_SIZE) pPort->Tail = 0;
-        }
-      }
+      ReceiveByte(pPort, ReadPort8(0x60));
     }
   }
 }

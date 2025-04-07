@@ -1,3 +1,4 @@
+#include "port.h"
 #include "arch.h"
 
 void ThreadInit()
@@ -12,7 +13,6 @@ void ThreadInit()
 
 BOOL InitPort(PS2_PORT *pPort)
 {
-  if (pPort->Index > 1) return FALSE;
   if (pPort && (pPort->pBuffer = MapMemory(NULL, BUFFER_SIZE, MAP_MEMORY_READABLE | MAP_MEMORY_WRITABLE)))
   {
     pPort->Head = 0;
@@ -58,5 +58,51 @@ void ClearInputBuffer(PS2_PORT *pPort)
 {
   pPort->Head = 0;
   pPort->Tail = 0;
+}
+
+void ReceiveByte(PS2_PORT *pPort, UINT8 Byte)
+{
+  if (Byte == 0xFE)
+  {
+    MESSAGE Message = { .ReceiverID = 2 };
+    Message.Payload[0] = (pPort->Index << 3);
+    SendMessage(&Message);
+  }
+  else if (Byte == 0xFA || (pPort->Command.Info[CMD_RESPONSE] == 0xFA && (pPort->Command.Info[CMD_SIZE_INFO] >> 4)))
+  {
+    if (pPort->Command.Info[CMD_RESPONSE] == 0xFA)
+    {
+      UINT8 ResponseSize = pPort->Command.Info[CMD_SIZE_INFO] >> 4;
+      pPort->Command.Info[CMD_SIZE_INFO] &= 15;
+      pPort->Command.Info[CMD_SIZE_INFO] |= (ResponseSize - 1) << 4;
+    }
+    else 
+    {
+      pPort->Command.Info[CMD_SIZE_INFO] &= 0xF0;
+      pPort->Command.Info[CMD_SIZE_INFO] |= pPort->Command.Info[CMD_SIZE_INFO] >> 4;
+      pPort->Command.Info[CMD_TIMEOUT] = CMD_RESPONSE;
+    }
+    pPort->Command.Info[pPort->Command.Info[CMD_TIMEOUT]++] = Byte;
+    if (!(pPort->Command.Info[CMD_SIZE_INFO] >> 4))
+    {
+      MESSAGE Message = { .ReceiverID = 2 };
+      Message.Payload[0] = (pPort->Index << 3);
+      SendMessage(&Message);
+    }
+  }
+  else if (Byte && ~Byte)
+  {
+    if (~pPort->Head)
+    {
+      pPort->pBuffer[pPort->Head++] = Byte;
+      if (pPort->Head == BUFFER_SIZE) pPort->Head = 0;
+      if (pPort->Head == pPort->Tail) pPort->Head = ~0;
+    }
+    else
+    {
+      pPort->pBuffer[pPort->Tail++] = Byte;
+      if (pPort->Tail == BUFFER_SIZE) pPort->Tail = 0;
+    }
+  }
 }
 

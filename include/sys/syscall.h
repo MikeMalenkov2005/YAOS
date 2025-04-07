@@ -6,7 +6,7 @@
 typedef UINTPTR SYSCALL;
 
 /* Task Termination */
-#define SYSCALL_TERMINATE     0   /* (0, 0, 0) */
+#define SYSCALL_TERMINATE     0   /* (0, 0, 0) may change */
 /* Message Passing */
 #define SYSCALL_SEND_MESSAGE  1   /* (MESSAGE*, 0, 0) */
 #define SYSCALL_POLL_MESSAGE  2   /* (MESSAGE*, 0, 0) */
@@ -17,7 +17,7 @@ typedef UINTPTR SYSCALL;
 #define SYSCALL_GET_GROUP_ID  6   /* (0, 0, 0) */
 #define SYSCALL_GET_PARENT_ID 7   /* (0, 0, 0) */
 #define SYSCALL_GET_LEADER_ID 8   /* (0, 0, 0) */
-#define SYSCALL_CREATE_THREAD 9   /* (EntryPoint, StackSize, 0) */
+#define SYSCALL_CREATE_TASK   9   /* (EntryPoint, StackSize, 0) will change */
 /* Memory Management */
 #define SYSCALL_MAP_MEMORY    10  /* (Reserved, Size, Flags) */
 #define SYSCALL_MAP_DEVICE    11  /* (Reserved, Size, Mapping) System Module Only */

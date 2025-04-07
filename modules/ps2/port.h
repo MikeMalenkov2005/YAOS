@@ -8,10 +8,13 @@
 #define CMD_SIZE_INFO 0
 #define CMD_MAIN_BYTE 1
 
+#define CMD_TIMEOUT   16
+#define CMD_RESPONSE  17
+
 typedef struct PS2_COMMAND
 {
   UINT SenderID;
-  UINT8 Info[16];
+  UINT8 Info[32];
 } PS2_COMMAND;
 
 typedef struct PS2_PORT

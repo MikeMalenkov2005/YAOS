@@ -143,7 +143,10 @@ void MessageLoop()
         case 10:  /* Disable Cursor */
           DisableCursor();
           break;
-        case 11:  /* Print Custom String */
+        case 11:  /* Clear Screen */
+          ClearScreen();
+          break;
+        case 12:  /* Print Custom String */
           break;
       }
     }
