@@ -1,15 +1,19 @@
 #ifndef INPUT_H
 #define INPUT_H
 
-int NextKeyEvent();
+#include <types.h>
 
-void SetSymbol(int X, int Y, int Symbol);
+UINT NextKeyEvent();
+
+void SetSymbol(UINT8 X, UINT8 Y, UINT16 Symbol);
 
 void FlushSymbols();
 
-void PrintString(int X, int Y, unsigned int Length, const char *pString);
+void PrintString(UINT8 X, UINT8 Y, UINT Length, const char *pString);
 
-void PrintColoredString(int X, int Y, unsigned int Length, const char *pString, char Color);
+void PrintColoredString(UINT8 X, UINT8 Y, UINT Length, const char *pString, UINT8 Color);
+
+BOOL SendCommandBuffer(UINT Size, const char *pBuffer);
 
 #endif
 

@@ -28,9 +28,9 @@ inline static BOOL NextKeyboardByte(UINT8 *pByte)
   return TRUE;
 }
 
-int NextKeyEvent()
+UINT NextKeyEvent()
 {
-  int Event = 0;
+  UINT Event = 0;
   UINT8 Byte = 0;
   while (!Byte) if (!NextKeyboardByte(&Byte)) return -1;
   if (Byte == 0xE0)
@@ -56,11 +56,11 @@ for (UINT i = 0; i < 7; ++i) if (!NextKeyboardByte(&Byte)) return -1;
   return Event | Byte;
 }
 
-void SetSymbol(int X, int Y, int Symbol)
+void SetSymbol(UINT8 X, UINT8 Y, UINT16 Symbol)
 {
   static MESSAGE Message = { .ReceiverID = 1 };
   static UINT SymbolIndex = 0;
-  if (X >= 0 && Y >= 0)
+  if (X < 80 && Y < 25)
   {
     UINT Index = SymbolIndex++ * 6;
     Message.Payload[Index++] = 8;
@@ -70,7 +70,7 @@ void SetSymbol(int X, int Y, int Symbol)
     Message.Payload[Index++] = Symbol >> 8;
     Message.Payload[Index++] = Symbol;
   }
-  if (SymbolIndex == 5 || X < 0 || Y < 0)
+  if (SymbolIndex == 5 || X >= 80 || Y >= 25)
   {
     SendMessage(&Message);
     SymbolIndex = 0;
@@ -79,10 +79,10 @@ void SetSymbol(int X, int Y, int Symbol)
 
 void FlushSymbols()
 {
-  SetSymbol(-1, -1, 0);
+  SetSymbol(255, 255, 0);
 }
 
-void PrintString(int X, int Y, unsigned int Length, const char *pString)
+void PrintString(UINT8 X, UINT8 Y, UINT Length, const char *pString)
 {
   if (!pString || !Length) return;
   MESSAGE Message = { .ReceiverID = 1 };
@@ -103,7 +103,7 @@ void PrintString(int X, int Y, unsigned int Length, const char *pString)
   }
 }
 
-void PrintColoredString(int X, int Y, unsigned int Length, const char *pString, char Color)
+void PrintColoredString(UINT8 X, UINT8 Y, UINT Length, const char *pString, UINT8 Color)
 {
   if (!pString || !Length) return;
   MESSAGE Message = { .ReceiverID = 1 };
@@ -123,5 +123,13 @@ void PrintColoredString(int X, int Y, unsigned int Length, const char *pString, 
     Message.Payload[1] = Index - Base;
     SendMessage(&Message);
   }
+}
+
+BOOL SendCommandBuffer(UINT Size, const char *pBuffer)
+{
+  MESSAGE Message = { .ReceiverID = 1 };
+  if (Size >= MESSAGE_SIZE) return FALSE;
+  for (UINT i = 0; i < Size; ++i) Message.Payload[i] = pBuffer[i];
+  return SendMessage(&Message) == SYSRET_OK;
 }
 
