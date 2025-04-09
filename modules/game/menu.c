@@ -7,9 +7,9 @@
 #define MENU_EXIT       3
 #define MENU_LAST_ITEM  MENU_EXIT
 
-static UINT MenuIndex;
-static UINT FieldSize;
-static UINT MineCount;
+static UINT MenuIndex = MENU_START_GAME;
+static UINT FieldSize = 8;
+static UINT MineCount = 8;
 
 #define MIN_MINE_COUNT  ((FieldSize * FieldSize) >> 3)
 #define MAX_MINE_COUNT  ((FieldSize * FieldSize) >> 2)
@@ -51,7 +51,7 @@ void MainMenuProc(UINT Event)
     case 'k':
       if (MenuIndex == MENU_FIELD_SIZE && FieldSize > 8)
       {
-        FieldSize -= 2;
+        --FieldSize;
         if (MineCount > MAX_MINE_COUNT)
         {
           MineCount = MAX_MINE_COUNT;
@@ -62,9 +62,9 @@ void MainMenuProc(UINT Event)
       DrawMenuItem(MenuIndex);
       break;
     case 't':
-      if (MenuIndex == MENU_FIELD_SIZE && FieldSize < 18)
+      if (MenuIndex == MENU_FIELD_SIZE && FieldSize < 19)
       {
-        FieldSize += 2;
+        ++FieldSize;
         if (MineCount < MIN_MINE_COUNT)
         {
           MineCount = MIN_MINE_COUNT;
@@ -102,8 +102,6 @@ BOOL InitMainMenu()
 {
   if (!SendCommandBuffer(4, "\x07\x00\x0A\x0B")) return FALSE;
   MenuIndex = MENU_START_GAME;
-  FieldSize = 8;
-  MineCount = MIN_MINE_COUNT;
   for (UINT Item = 0; Item <= MENU_LAST_ITEM; ++Item) DrawMenuItem(Item);
   SetSceneProc(MainMenuProc);
   return TRUE;

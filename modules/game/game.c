@@ -1,9 +1,9 @@
 #include "game.h"
 #include "io.h"
 
-static UINT RandomSeed;
+static UINT32 RandomSeed;
 
-#define Random() (RandomSeed = 23497 * RandomSeed + 12345)
+#define Random() ((UINT)((RandomSeed = RandomSeed * 1103515245 + 12345) >> 16) & 0x7FFF)
 
 static UINT GameSize;
 static UINT SafeCount;
@@ -15,7 +15,7 @@ static BOOLEAN bGameIsNew;
 static BOOLEAN bGameEnded;
 static BOOLEAN bAltIsPressed;
 
-static UINT8 GameField[18][18];
+static UINT8 GameField[19][19];
 
 #define GAME_FIELD_POSITION (40 - GameSize)
 
@@ -193,7 +193,7 @@ BOOL InitGame(UINT FieldSize, UINT MineCount)
   for (UINT Y = 0; Y < GameSize; ++Y)
   {
     for (UINT X = 0; X < GameSize; ++X) GameField[X][Y] = 0;
-    PrintColoredString(GAME_FIELD_POSITION, Y + 1, GameSize << 1, ". . . . . . . . . . . . . . . . . . ", 7);
+    PrintColoredString(GAME_FIELD_POSITION, Y + 1, GameSize << 1, ". . . . . . . . . . . . . . . . . . . ", 7);
   }
   for (UINT i = 0; i < MineCount; ++i) PlaceMine();
   UpdatePosition(CursorX, CursorY);
