@@ -17,7 +17,7 @@ static BOOLEAN bAltIsPressed;
 
 static UINT8 GameField[18][18];
 
-#define GAME_FIELD_POSITION (40 - (GameSize >> 1))
+#define GAME_FIELD_POSITION (40 - GameSize)
 
 inline static UINT16 GetSymbol(UINT8 State)
 {
@@ -33,8 +33,106 @@ inline static UINT16 GetSymbol(UINT8 State)
 
 inline static void UpdatePosition(UINT8 X, UINT8 Y)
 {
-  SetSymbol(X + GAME_FIELD_POSITION, Y, GetSymbol(GameField[X][Y]));
+  SetSymbol((X << 1) + GAME_FIELD_POSITION, Y + 1, GetSymbol(GameField[X][Y]));
   FlushSymbols();
+}
+
+void PlaceMine()
+{
+  UINT X = Random() % GameSize;
+  UINT Y = Random() % GameSize;
+  while (GameField[X][Y] & 0x40)
+  {
+    if (Random() & 1) X = Random() % GameSize;
+    else Y = Random() % GameSize;
+  }
+  
+  if (Y > 0)
+  {
+    if (X > 0) GameField[X-1][Y-1]++;
+    GameField[X][Y-1]++;
+    if (X < GameSize - 1) GameField[X+1][Y-1]++;
+  }
+
+  if (X > 0) GameField[X-1][Y]++;
+  GameField[X][Y] |= 0x40;
+  if (X < GameSize - 1) GameField[X+1][Y]++;
+  
+  if (Y < GameSize - 1)
+  {
+    if (X > 0) GameField[X-1][Y+1]++;
+    GameField[X][Y+1]++;
+    if (X < GameSize - 1) GameField[X+1][Y+1]++;
+  }
+}
+
+void RemoveMine(UINT8 X, UINT8 Y)
+{
+  if (GameField[X][Y] & 0x40)
+  {
+    if (Y > 0)
+    {
+      if (X > 0) GameField[X-1][Y-1]--;
+      GameField[X][Y-1]--;
+      if (X < GameSize - 1) GameField[X+1][Y-1]--;
+    }
+
+    if (X > 0) GameField[X-1][Y]--;
+    GameField[X][Y] &= 0xBF;
+    if (X < GameSize - 1) GameField[X+1][Y]--;
+    
+    if (Y < GameSize - 1)
+    {
+      if (X > 0) GameField[X-1][Y+1]--;
+      GameField[X][Y+1]--;
+      if (X < GameSize - 1) GameField[X+1][Y+1]--;
+    }
+  }
+}
+
+void OpenCell(UINT8 X, UINT8 Y)
+{
+  if (GameField[X][Y] & 0x10) return;
+  UINT8 State = (GameField[X][Y] |= 0x10);
+  if ((State & 0x40) && !bGameIsNew)
+  {
+    PrintColoredString(GAME_FIELD_POSITION, GameSize + 2, 8, "YOU LOST", 4);
+    UpdatePosition(X, Y);
+    bGameEnded = TRUE;
+  }
+  else
+  {
+    if (State & 0x40)
+    {
+      PlaceMine();
+      RemoveMine(X, Y);
+    }
+    if (!(State & 15))
+    {
+      if (Y > 0)
+      {
+        if (X > 0) OpenCell(X-1, Y-1);
+        OpenCell(X, Y-1);
+        if (X < GameSize - 1) OpenCell(X+1, Y-1);
+      }
+      if (X > 0) OpenCell(X-1, Y);
+      if (X < GameSize - 1) OpenCell(X+1, Y);
+      if (Y < GameSize - 1)
+      {
+        if (X > 0) OpenCell(X-1, Y+1);
+        OpenCell(X, Y+1);
+        if (X < GameSize - 1) OpenCell(X+1, Y+1);
+      }
+    }
+    if (!--SafeCount)
+    {
+      PrintColoredString(GAME_FIELD_POSITION, GameSize + 2, 8, "YOU WON!", 2);
+      UpdatePosition(X, Y);
+      bGameEnded = TRUE;
+    }
+  }
+  UpdatePosition(X, Y);
+  bGameIsNew = FALSE;
 }
 
 void GameProc(UINT Event)
@@ -48,46 +146,45 @@ void GameProc(UINT Event)
       bAltIsPressed = FALSE;
       break;
     case 'k':
-      if (CursorX) CursorX--;
+      if (!bGameEnded && CursorX) UpdatePosition(--CursorX, CursorY);
       break;
     case 't':
-      if (CursorX < GameSize - 1) CursorX++;
+      if (!bGameEnded && CursorX < GameSize - 1) UpdatePosition(++CursorX, CursorY);
       break;
     case 'u':
-      if (CursorY) CursorY--;
+      if (!bGameEnded && CursorY) UpdatePosition(CursorX, --CursorY);
       break;
     case 'r':
-      if (CursorY < GameSize - 1) CursorY++;
+      if (!bGameEnded && CursorY < GameSize - 1) UpdatePosition(CursorX, ++CursorY);
       break;
     case 'Z':
-      if (!(GameField[CursorX][CursorY] & 0x10))
+      if (!bGameEnded && !(GameField[CursorX][CursorY] & 0x10))
       {
-        if (!bAltIsPressed && !(GameField[CursorX][CursorY] & 0x20))
+        if (bAltIsPressed || (GameField[CursorX][CursorY] & 0x20))
         {
-          if ((GameField[CursorX][CursorY] |= 0x10) & 0x40)
-          {
-            UpdatePosition(CursorX, CursorY);
-            PrintColoredString(GAME_FIELD_POSITION, GameSize + 1, 9, "GAME OVER", 4);
-            bGameEnded = TRUE;
-          }
-          else SafeCount--;
+          GameField[CursorX][CursorY] ^= 0x20;
+          UpdatePosition(CursorX, CursorY);
         }
-        else GameField[CursorX][CursorY] ^= 0x20;
+        else OpenCell(CursorX, CursorY);
       }
       break;
     case 'v':
       InitMainMenu();
       break;
   }
-  if (bGameEnded) UpdatePosition(CursorX, CursorY);
 }
 
 BOOL InitGame(UINT FieldSize, UINT MineCount)
 {
   if (MineCount >= FieldSize * FieldSize || !SendCommandBuffer(6, "\x07\x00\x0B\x09\x0B\x0D")) return FALSE;
+  PrintColoredString( 0, 24, 20, " Use ESC to exit.   ", 0x8E);
+  PrintColoredString(20, 24, 20, " Move with arrows.  ", 0x8E);
+  PrintColoredString(40, 24, 20, " CR opens a cell.   ", 0x8E);
+  PrintColoredString(60, 24, 19, " ALT+CR sets a flag.", 0x8E);
+  SetSymbol(79, 24, 0x8E00 | '.');
   RandomSeed = FieldSize * MineCount;
   GameSize = FieldSize;
-  SafeCount = FieldSize - MineCount;
+  SafeCount = FieldSize * FieldSize - MineCount;
   CursorX = 0;
   CursorY = 0;
   bGameIsNew = TRUE;
@@ -96,36 +193,9 @@ BOOL InitGame(UINT FieldSize, UINT MineCount)
   for (UINT Y = 0; Y < GameSize; ++Y)
   {
     for (UINT X = 0; X < GameSize; ++X) GameField[X][Y] = 0;
-    PrintColoredString(GAME_FIELD_POSITION, Y, GameSize, "..................", 7);
+    PrintColoredString(GAME_FIELD_POSITION, Y + 1, GameSize << 1, ". . . . . . . . . . . . . . . . . . ", 7);
   }
-  for (UINT i = 0; i < MineCount; ++i)
-  {
-    UINT X = Random() % GameSize;
-    UINT Y = Random() % GameSize;
-    while (GameField[X][Y] & 0x40)
-    {
-      if (Random() & 1) X = Random() % GameSize;
-      else Y = Random() % GameSize;
-    }
-    
-    if (Y > 0)
-    {
-      if (X > 0) GameField[X-1][Y-1]++;
-      GameField[X][Y-1]++;
-      if (X < GameSize - 1) GameField[X+1][Y-1]++;
-    }
-
-    if (X > 0) GameField[X-1][Y]++;
-    GameField[X][Y] |= 0x40;
-    if (X < GameSize - 1) GameField[X+1][Y]++;
-    
-    if (Y < GameSize - 1)
-    {
-      if (X > 0) GameField[X-1][Y+1]++;
-      GameField[X][Y+1]++;
-      if (X < GameSize - 1) GameField[X+1][Y+1]++;
-    }
-  }
+  for (UINT i = 0; i < MineCount; ++i) PlaceMine();
   UpdatePosition(CursorX, CursorY);
   SetSceneProc(GameProc);
   return TRUE;

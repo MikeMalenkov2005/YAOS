@@ -1,8 +1,8 @@
-#include "kernel/memory.h"
 #include <kernel/arch/x86/init.h>
 #include <kernel/arch/x86/task.h>
 #include <kernel/arch/x86/mmu.h>
 #include <kernel/arch/x86/fpu.h>
+#include <kernel/arch/x86/dbg.h>
 #include <kernel/arch/x86/dt.h>
 #include <kernel/image.h>
 #include <kernel/timer.h>
@@ -69,6 +69,7 @@ void InitArch(UINT32 BootMagic, BOOT_INFO *pBootInfo, UINT32 SystemStack, INTERR
   InitTasks();
   SetTaskFrame(&Frame);
   SetArchInfo(EM_386, COFF_MACHINE_I386, FALSE);
+  InitDBG();
   /* Create a Task for Each Module */
   for (UINT32 i = 0; i < ModulesCount; ++i)
   {
@@ -79,7 +80,7 @@ void InitArch(UINT32 BootMagic, BOOT_INFO *pBootInfo, UINT32 SystemStack, INTERR
     SIZE_T ModulePageCount = PAGE_ROUND_UP(ModuleSize + (pModules[i].StartAddress & PAGE_FLAGS_MASK)) >> PAGE_SHIFT;
     UINTPTR FirstModulePage = FindLastFreeVirtualPages(ModulePageCount);
     for (SIZE_T j = 0; j < ModulePageCount; ++j) SetPageMapping(FirstModulePage + j * PAGE_SIZE,
-        (pModules[i].StartAddress & PAGE_ADDRESS_MASK) | MAPPING_PRESENT_BIT | MAPPING_READABLE_BIT);
+        (PAGE_ROUND_DOWN(pModules[i].StartAddress) + j * PAGE_SIZE) | MAPPING_PRESENT_BIT | MAPPING_READABLE_BIT);
     void *pModuleData = (void*)(FirstModulePage | (pModules[i].StartAddress & PAGE_FLAGS_MASK));
     UINTPTR EntryPoint = 0;
 

@@ -1,18 +1,50 @@
-#include <types.h>
+#include <kernel/arch/x86/dbg.h>
+#include <kernel/arch/x86/pio.h>
 
-static SIZE_T PrintPos = 0;
+#define PORT 0x3F8
 
-void DebugPrint(UINT8 Prefix, UINTPTR Page)
+void InitDBG()
 {
-  ((UINT16*)(void*)0xB8000)[PrintPos++] = Prefix | 0x900;
-  for (UINT k = 0; k < 8; ++k)
-  {
-    UINT16 Char = (Page >> ((7 - k) << 2)) & 0xF;
-    Char += Char < 10 ? '0' : 'A' - 10;
-    ((UINT16*)(void*)0xB8000)[PrintPos++] = Char | 0x200;
-  }
-  ((UINT16*)(void*)0xB8000)[PrintPos++] = 0;
-  if (PrintPos >= 80) PrintPos = 0;
+  WritePort8(PORT + 1, 0x00);
+  WritePort8(PORT + 3, 0x80);
+  WritePort8(PORT + 0, 0x03);
+  WritePort8(PORT + 1, 0x00);
+  WritePort8(PORT + 3, 0x03);
+  WritePort8(PORT + 2, 0xC7);
+  WritePort8(PORT + 4, 0x0B);
+  WritePort8(PORT + 4, 0x0F);
 }
 
+UINT8 ReadByte()
+{
+  while (!(ReadPort8(PORT + 5) & 1));
+  return ReadPort8(PORT);
+}
+
+void WriteByte(UINT8 Byte)
+{
+  while (!(ReadPort8(PORT + 5) & 0x20));
+  WritePort8(PORT, Byte);
+}
+
+void PrintStringDBG(const char *pString)
+{
+  for (SIZE_T i = 0; pString[i]; ++i) WriteByte(pString[i]);
+}
+
+void PrintNumberDBG(UINTPTR Number, UINT8 Width, UINT8 Base)
+{
+  UINT8 szBuffer[256];
+  UINT Position = sizeof(szBuffer);
+  szBuffer[--Position] = 0;
+  do
+  {
+    UINT8 Char = Number % Base;
+    Number /= Base;
+    Char += Char < 10 ? '0' : 'A' - 10;
+    szBuffer[--Position] = Char;
+  }
+  while (Width ? --Width : Number);
+  PrintStringDBG((char*)szBuffer + Position);
+}
 

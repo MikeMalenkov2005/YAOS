@@ -73,6 +73,7 @@ void SetSymbol(UINT8 X, UINT8 Y, UINT16 Symbol)
   if (SymbolIndex == 5 || X >= 80 || Y >= 25)
   {
     SendMessage(&Message);
+    for (UINT i = 0; i < MESSAGE_SIZE; ++i) Message.Payload[i] = 0;
     SymbolIndex = 0;
   }
 }
@@ -118,9 +119,10 @@ void PrintColoredString(UINT8 X, UINT8 Y, UINT Length, const char *pString, UINT
   SendMessage(&Message);
   for (UINT Base = Index; Index < Length; Base = Index)
   {
-    Message.Payload[0] = 1;
-    for (UINT i = 2; i < MESSAGE_SIZE && Index < Length; ++i) Message.Payload[i] = pString[Index++];
-    Message.Payload[1] = Index - Base;
+    Message.Payload[0] = 2;
+    Message.Payload[1] = Color;
+    for (UINT i = 3; i < MESSAGE_SIZE && Index < Length; ++i) Message.Payload[i] = pString[Index++];
+    Message.Payload[2] = Index - Base;
     SendMessage(&Message);
   }
 }

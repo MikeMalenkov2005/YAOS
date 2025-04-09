@@ -6,14 +6,14 @@
 #include <attrib.h>
 #include <types.h>
 
-extern void DebugPrint(UINT8 Prefix, UINTPTR Page);
-
+/*
 inline static UINTPTR ReadCR2()
 {
   UINTPTR CR2;
   asm volatile ("mov %%cr2, %0" : "=a"(CR2));
   return CR2;
 }
+*/
 
 void HandleInterrupt(INTERRUPT_FRAME Frame)
 {
@@ -21,11 +21,13 @@ void HandleInterrupt(INTERRUPT_FRAME Frame)
   SetTaskFrame(&Frame);
   if (ISRIndex < 32)
   {
+    /*
     DebugPrint('E', ISRIndex);
     DebugPrint('C', Frame.ErrorCode);
     DebugPrint('R', ReadCR2());
     DebugPrint('I', Frame.EIP);
     DebugPrint((GetCurrentTask()->Flags & TASK_THREAD_BIT) ? 'T' : 'P', GetCurrentTask()->TaskID);
+    */
     KernelPanic("EXCEPTION");
   }
   else if (ISRIndex == 32) HandleTimerTick();
