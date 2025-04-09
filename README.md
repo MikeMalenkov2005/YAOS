@@ -43,7 +43,6 @@ The `make clean` command deletes everything created during the build process.
 TODO List
 ---------
 
-- **Fix loading images larger then 4Kib**
 - Add more system calls
 - Create a PCI driver
 - Create a FDD driver
