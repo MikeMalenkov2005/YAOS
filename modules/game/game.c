@@ -177,11 +177,11 @@ void GameProc(UINT Event)
 BOOL InitGame(UINT FieldSize, UINT MineCount)
 {
   if (MineCount >= FieldSize * FieldSize || !SendCommandBuffer(6, "\x07\x00\x0B\x09\x0B\x0D")) return FALSE;
-  PrintColoredString( 0, 24, 20, " Use ESC to exit.   ", 0x8E);
-  PrintColoredString(20, 24, 20, " Move with arrows.  ", 0x8E);
-  PrintColoredString(40, 24, 20, " CR opens a cell.   ", 0x8E);
-  PrintColoredString(60, 24, 19, " ALT+CR sets a flag.", 0x8E);
-  SetSymbol(79, 24, 0x8E00 | '.');
+  PrintColoredString( 0, 24, 20, " Use ESC to exit.   ", 14);
+  PrintColoredString(20, 24, 20, " Move with arrows.  ", 14);
+  PrintColoredString(40, 24, 20, " CR opens a cell.   ", 14);
+  PrintColoredString(60, 24, 19, " ALT+CR sets a flag.", 14);
+  SetSymbol(79, 24, 0xE00 | '.');
   RandomSeed = FieldSize * MineCount;
   GameSize = FieldSize;
   SafeCount = FieldSize * FieldSize - MineCount;
