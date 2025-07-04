@@ -7,7 +7,7 @@ KERNEL_VERSION = 0.1
 KERNEL = $(ARCH)-$(KERNEL_NAME)-$(KERNEL_VERSION)
 KERNEL_FILE = $(ROOTDIR)/$(KERNEL).sys
 
-MODULES = idle ps2 game
+MODULES = idle pci storage game
 
 #### PROJECT FILES ####
 

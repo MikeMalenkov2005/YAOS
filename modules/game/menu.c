@@ -91,7 +91,7 @@ void MainMenuProc(UINT Event)
           InitGame(FieldSize, MineCount);
           break;
         case MENU_EXIT:
-          InitMainMenu();
+          SetSceneProc(NULL);
           break;
       }
       break;

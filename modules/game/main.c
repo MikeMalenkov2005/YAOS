@@ -25,6 +25,8 @@ void Init()
   {
     EventLoop();
   }
+  MESSAGE Message = { .ReceiverID = 3, .Payload = "\x07\x02\x0B" };
+  SendMessage(&Message);
   Terminate();
 }
 
