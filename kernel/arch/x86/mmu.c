@@ -116,6 +116,7 @@ UINTPTR GetPageMapping(UINTPTR VirtualPage)
   if (Page & PAGE_USER_FLAG) Mapping |= MAPPING_USER_MODE_BIT;
   if (Page & PAGE_GLOBAL_FLAG) Mapping |= MAPPING_GLOBAL_BIT;
   if (Page & PAGE_EXTERNAL_FLAG) Mapping |= MAPPING_EXTERNAL_BIT;
+  if (Page & PAGE_CACHE_DISABLE_FLAG) Mapping |= MAPPING_CACHE_DISABLE_BIT;
   return Mapping;
 }
 
@@ -131,6 +132,7 @@ BOOL SetPageMapping(UINTPTR VirtualPage, UINTPTR Mapping)
   if (Mapping & MAPPING_USER_MODE_BIT) Page |= PAGE_USER_FLAG;
   if (Mapping & MAPPING_GLOBAL_BIT) Page |= PAGE_GLOBAL_FLAG;
   if (Mapping & MAPPING_EXTERNAL_BIT) Page |= PAGE_EXTERNAL_FLAG;
+  if (Mapping & MAPPING_CACHE_DISABLE_BIT) Page |= PAGE_CACHE_DISABLE_FLAG;
   if (!(pPageDirectory[TableIndex] & PAGE_PRESENT_FLAG))
   {
     if (!Page) return TRUE;

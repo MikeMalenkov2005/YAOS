@@ -80,7 +80,7 @@ void HandleSystemCall(SYSRET *pResult, SYSCALL Function, SYSCALL_ARGUMENTS Argum
       {
         SIZE_T PageCount = PAGE_ROUND_UP(Arguments.B) >> PAGE_SHIFT;
         UINTPTR FirstPage = FindLastFreeVirtualPages(PageCount);
-        UINTPTR Mapping = (Arguments.C & PAGE_ADDRESS_MASK) | MAPPING_USER_MODE_BIT | MAPPING_PRESENT_BIT | MAPPING_EXTERNAL_BIT;
+        UINTPTR Mapping = (Arguments.C & PAGE_ADDRESS_MASK) | MAPPING_USER_MODE_BIT | MAPPING_PRESENT_BIT | MAPPING_EXTERNAL_BIT | MAPPING_CACHE_DISABLE_BIT;
         if (Arguments.C & MAP_MEMORY_READABLE) Mapping |= MAPPING_READABLE_BIT;
         if (Arguments.C & MAP_MEMORY_WRITABLE) Mapping |= MAPPING_WRITABLE_BIT;
         for (UINTPTR i = 0; i < PageCount; ++i) (void)SetPageMapping(FirstPage + i * PAGE_SIZE, Mapping + i * PAGE_SIZE);

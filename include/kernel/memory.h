@@ -21,13 +21,14 @@ BOOL DeleteMemoryMap(UINTPTR MemoryMap);
 
 void InvalidatePage(UINTPTR VirtualPage);
 
-#define MAPPING_PRESENT_BIT     (1 << 0)
-#define MAPPING_READABLE_BIT    (1 << 1)
-#define MAPPING_WRITABLE_BIT    (1 << 2)
-#define MAPPING_EXECUTABLE_BIT  (1 << 3)
-#define MAPPING_USER_MODE_BIT   (1 << 4)
-#define MAPPING_GLOBAL_BIT      (1 << 5)
-#define MAPPING_EXTERNAL_BIT    (1 << 6)
+#define MAPPING_PRESENT_BIT       (1 << 0)
+#define MAPPING_READABLE_BIT      (1 << 1)
+#define MAPPING_WRITABLE_BIT      (1 << 2)
+#define MAPPING_EXECUTABLE_BIT    (1 << 3)
+#define MAPPING_USER_MODE_BIT     (1 << 4)
+#define MAPPING_GLOBAL_BIT        (1 << 5)
+#define MAPPING_EXTERNAL_BIT      (1 << 6)
+#define MAPPING_CACHE_DISABLE_BIT (1 << 7)
 
 UINTPTR GetPageMapping(UINTPTR VirtualPage);
 
