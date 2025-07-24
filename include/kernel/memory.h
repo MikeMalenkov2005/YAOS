@@ -30,6 +30,8 @@ void InvalidatePage(UINTPTR VirtualPage);
 #define MAPPING_EXTERNAL_BIT      (1 << 6)
 #define MAPPING_CACHE_DISABLE_BIT (1 << 7)
 
+#define MAPPING_COMMITED_MASK     (MAPPING_READABLE_BIT | MAPPING_WRITABLE_BIT | MAPPING_EXECUTABLE_BIT)
+
 UINTPTR GetPageMapping(UINTPTR VirtualPage);
 
 BOOL SetPageMapping(UINTPTR VirtualPage, UINTPTR Mapping);
@@ -37,6 +39,8 @@ BOOL SetPageMapping(UINTPTR VirtualPage, UINTPTR Mapping);
 BOOL MapFreePage(UINTPTR VirtualPage, UINT MappingFlags);
 
 BOOL FreeMappedPage(UINTPTR VirtualPage);
+
+BOOL RemapPage(UINTPTR VirtualPage, UINT MappingFlags);
 
 BOOL IsUserPage(UINTPTR VirtualPage);
 

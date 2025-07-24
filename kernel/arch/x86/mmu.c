@@ -160,12 +160,17 @@ BOOL SetPageMapping(UINTPTR VirtualPage, UINTPTR Mapping)
 
 BOOL MapFreePage(UINTPTR VirtualPage, UINT MappingFlags)
 {
-  if (!NextFreePage /* Out of Free Pages */
-      || GetPageMapping(VirtualPage) /* The Page is already Mapped */
+  if (GetPageMapping(VirtualPage) /* The Page is already Mapped */
       || !SetPageMapping(VirtualPage, MAPPING_EXTERNAL_BIT)) return FALSE; /* The Page cannot be Mapped */
+  if (!(MappingFlags & MAPPING_COMMITED_MASK))
+  {
+    /* Page Reservation */
+    (void)SetPageMapping(VirtualPage, MappingFlags & PAGE_FLAGS_MASK & ~MAPPING_PRESENT_BIT);
+    return TRUE;
+  }
   if (!NextFreePage)
   {
-    /* Out of Free Pages Again */
+    /* Out of Free Pages */
     (void)SetPageMapping(VirtualPage, 0);
     return FALSE;
   }
@@ -178,10 +183,21 @@ BOOL FreeMappedPage(UINTPTR VirtualPage)
 {
   if (VirtualPage >= (UINTPTR)pPageTable) return FALSE; /* The Page Table can NOT be freed with this function */
   UINTPTR Mapping = GetPageMapping(VirtualPage);
+  if (!(Mapping & MAPPING_COMMITED_MASK)) return SetPageMapping(VirtualPage, 0);
   if (!(Mapping & MAPPING_PRESENT_BIT)) return FALSE;
   *(UINTPTR*)(void*)VirtualPage = NextFreePage;
   NextFreePage = Mapping & PAGE_ADDRESS_MASK;
   return SetPageMapping(VirtualPage, 0);
+}
+
+BOOL RemapPage(UINTPTR VirtualPage, UINT MappingFlags)
+{
+  if (VirtualPage >= (UINTPTR)pPageTable) return FALSE; /* The Page Table can NOT be remapped with this function */
+  UINTPTR Mapping = GetPageMapping(VirtualPage);
+  if (!Mapping) return FALSE;
+  MappingFlags &= PAGE_FLAGS_MASK & ~MAPPING_PRESENT_BIT;
+  if ((Mapping & PAGE_FLAGS_MASK & ~MAPPING_PRESENT_BIT) == MappingFlags) return TRUE;
+  return SetPageMapping(VirtualPage, (Mapping & (PAGE_ADDRESS_MASK | MAPPING_PRESENT_BIT)) | MappingFlags);
 }
 
 BOOL IsUserPage(UINTPTR VirtualPage)

@@ -23,6 +23,7 @@ typedef UINTPTR SYSCALL;
 #define SYSCALL_MAP_DEVICE    11  /* (Reserved, Size, Mapping) System Module Only */
 #define SYSCALL_FREE_MAPPING  12  /* (VAddr, Size, 0) */
 #define SYSCALL_SHARE_MAPPING 13  /* (VAddr, Size, TaskID) */
+#define SYSCALL_REMAP_MEMORY  14  /* (VAddr, Size, Flags) */
 /* Device IRQ Handling */
 #define SYSCALL_WAIT_IRQ      30  /* (IRQ, 0, 0) System Module Only */
 #define SYSCALL_END_IRQ       31  /* (0, 0, 0) System Module Only */
@@ -30,6 +31,7 @@ typedef UINTPTR SYSCALL;
 /* Create Task Flags (NOT IMPLEMENTED) */
 
 /* Map Memory Flags */
+#define MAP_MEMORY_RESERVED   0
 #define MAP_MEMORY_WRITABLE   1
 #define MAP_MEMORY_READABLE   2
 #define MAP_MEMORY_EXECUTABLE 4

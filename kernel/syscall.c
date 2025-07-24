@@ -113,7 +113,10 @@ void HandleSystemCall(SYSRET *pResult, SYSCALL Function, SYSCALL_ARGUMENTS Argum
       else *pResult = SYSRET_INVALID_ARGUMENT;
       break;
     case SYSCALL_SHARE_MAPPING:
-      /* TODO: Implement */
+      /* TODO: Implement SYSCALL_SHARE_MAPPING */
+      break;
+    case SYSCALL_REMAP_MEMORY:
+      /* TODO: Implement SYSCALL_REMAP_MEMORY */
       break;
     case SYSCALL_WAIT_IRQ:
       *pResult = SYSRET_OK;

@@ -15,6 +15,10 @@
 #define PAGE_ATTRIBUTE_TABLE_FLAG (1 << 7)
 #define PAGE_GLOBAL_FLAG          (1 << 8)
 #define PAGE_EXTERNAL_FLAG        (1 << 9)
+#define PAGE_READABLE_FLAG        (1 << 10)
+#define PAGE_EXECUTABLE_FLAG      (1 << 11)
+
+#define PAGE_COMMITED_MASK        (PAGE_READABLE_FLAG & PAGE_WRITABLE_FLAG & PAGE_EXECUTABLE_FLAG)
 
 void InitMMU(UINTPTR FreePageList);
 
