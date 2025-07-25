@@ -44,11 +44,12 @@ TODO List
 ---------
 
 - Add more system calls
-- Create a PCI driver
 - Create a FDD driver
 - Create a HDD driver
 - Create a VFS (virtual file system) driver
 - Create a vFAT driver
 - Create a SO (shared object) driver
 - Write some applications
+- Check PCI driver reliability
+- Create a Video driver
 
