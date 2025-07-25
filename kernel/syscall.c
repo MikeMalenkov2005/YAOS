@@ -89,34 +89,40 @@ void HandleSystemCall(SYSRET *pResult, SYSCALL Function, SYSCALL_ARGUMENTS Argum
       else *pResult = 0;
       break;
     case SYSCALL_FREE_MAPPING:
+      *pResult = SYSRET_INVALID_ARGUMENT;
       if (!(Arguments.A & PAGE_FLAGS_MASK) && Arguments.B)
       {
         SIZE_T PageCount = PAGE_ROUND_UP(Arguments.B) >> PAGE_SHIFT;
-        UINT Flags = GetPageMapping(Arguments.A) & PAGE_FLAGS_MASK;
+        UINT Flags = GetRangeMappingFlags(Arguments.A, Arguments.B);
         *pResult = (Flags & MAPPING_USER_MODE_BIT) ? SYSRET_OK : SYSRET_INVALID_ARGUMENT;
-        for (SIZE_T i = 0; i < PageCount && *pResult == SYSRET_OK; ++i)
-        {
-          if ((GetPageMapping(Arguments.A + i * PAGE_SIZE) & PAGE_FLAGS_MASK) != Flags)
-          {
-            *pResult = SYSRET_INVALID_ARGUMENT;
-          }
-        }
-        if (*pResult == SYSRET_OK)
+        if (Flags & MAPPING_USER_MODE_BIT)
         {
           if (Flags & MAPPING_EXTERNAL_BIT)
           {
             for (SIZE_T i = 0; i < PageCount; ++i) (void)SetPageMapping(Arguments.A + i * PageCount, 0);
           }
           else (void)FreeMappedPages(Arguments.A, PageCount);
+          *pResult = SYSRET_OK;
         }
       }
-      else *pResult = SYSRET_INVALID_ARGUMENT;
       break;
     case SYSCALL_SHARE_MAPPING:
       /* TODO: Implement SYSCALL_SHARE_MAPPING */
       break;
     case SYSCALL_REMAP_MEMORY:
-      /* TODO: Implement SYSCALL_REMAP_MEMORY */
+      *pResult = SYSRET_INVALID_ARGUMENT;
+      if (!(Arguments.A & PAGE_FLAGS_MASK) && Arguments.B)
+      {
+        SIZE_T PageCount = PAGE_ROUND_UP(Arguments.B) >> PAGE_SHIFT;
+        UINT Flags = GetRangeMappingFlags(Arguments.A, Arguments.B);
+        if (Flags & MAPPING_USER_MODE_BIT)
+        {
+          Flags = (Arguments.B & MAP_MEMORY_READABLE) ? (Flags | MAPPING_READABLE_BIT) : (Flags & ~MAPPING_READABLE_BIT);
+          Flags = (Arguments.B & MAP_MEMORY_WRITABLE) ? (Flags | MAPPING_WRITABLE_BIT) : (Flags & ~MAPPING_WRITABLE_BIT);
+          Flags = (Arguments.B & MAP_MEMORY_EXECUTABLE) ? (Flags | MAPPING_EXECUTABLE_BIT) : (Flags & ~MAPPING_EXECUTABLE_BIT);
+          if (RemapPages(Arguments.A, PageCount, Flags)) *pResult = SYSRET_OK;
+        }
+      }
       break;
     case SYSCALL_WAIT_IRQ:
       *pResult = SYSRET_OK;

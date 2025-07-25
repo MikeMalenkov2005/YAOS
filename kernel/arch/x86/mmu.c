@@ -184,7 +184,7 @@ BOOL FreeMappedPage(UINTPTR VirtualPage)
   if (VirtualPage >= (UINTPTR)pPageTable) return FALSE; /* The Page Table can NOT be freed with this function */
   UINTPTR Mapping = GetPageMapping(VirtualPage);
   if (!(Mapping & MAPPING_COMMITED_MASK)) return SetPageMapping(VirtualPage, 0);
-  if (!(Mapping & MAPPING_PRESENT_BIT)) return FALSE;
+  if (!(Mapping & MAPPING_PRESENT_BIT)) return FALSE; /* TODO: Implement swap */
   *(UINTPTR*)(void*)VirtualPage = NextFreePage;
   NextFreePage = Mapping & PAGE_ADDRESS_MASK;
   return SetPageMapping(VirtualPage, 0);
@@ -197,6 +197,20 @@ BOOL RemapPage(UINTPTR VirtualPage, UINT MappingFlags)
   if (!Mapping) return FALSE;
   MappingFlags &= PAGE_FLAGS_MASK & ~MAPPING_PRESENT_BIT;
   if ((Mapping & PAGE_FLAGS_MASK & ~MAPPING_PRESENT_BIT) == MappingFlags) return TRUE;
+  if ((Mapping & MAPPING_EXTERNAL_BIT) != (MappingFlags & MAPPING_EXTERNAL_BIT)) return FALSE;
+  if (!(Mapping & MAPPING_EXTERNAL_BIT))
+  {
+    if ((Mapping & MAPPING_COMMITED_MASK) && !(MappingFlags & MAPPING_COMMITED_MASK))
+    {
+      /* Decommit page */
+      return FreeMappedPage(VirtualPage) && SetPageMapping(VirtualPage, MappingFlags);
+    }
+    if (!(Mapping & MAPPING_COMMITED_MASK) && (MappingFlags & MAPPING_COMMITED_MASK))
+    {
+      /* Commit page */
+      return SetPageMapping(VirtualPage, 0) && MapFreePage(VirtualPage, MappingFlags);
+    }
+  }
   return SetPageMapping(VirtualPage, (Mapping & (PAGE_ADDRESS_MASK | MAPPING_PRESENT_BIT)) | MappingFlags);
 }
 

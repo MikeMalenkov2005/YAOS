@@ -60,6 +60,11 @@ void *MapBestFreePages(SIZE_T PageCount, UINT MappingFlags);
 
 SIZE_T FreeMappedPages(UINTPTR FirstPage, SIZE_T PageCount);
 
+BOOL RemapPages(UINTPTR FirstPage, SIZE_T PageCount, UINT MappingFlags);
+
 BOOL CheckUserAccess(const void *pBlock, SIZE_T Size);
+
+/* Forces MAPPING_PRESENT_BIT to 1, returnes 0 on failure */
+UINT GetRangeMappingFlags(UINTPTR FirstPage, SIZE_T PageCount);
 
 #endif

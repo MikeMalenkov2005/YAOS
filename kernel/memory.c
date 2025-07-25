@@ -97,6 +97,22 @@ SIZE_T FreeMappedPages(UINTPTR FirstPage, SIZE_T PageCount)
   return PageCount;
 }
 
+BOOL RemapPages(UINTPTR FirstPage, SIZE_T PageCount, UINT MappingFlags)
+{
+  UINT CurrentFlags = GetRangeMappingFlags(FirstPage, PageCount);
+  if (!CurrentFlags) return FALSE;
+  if (CurrentFlags == (MappingFlags | MAPPING_PRESENT_BIT)) return TRUE;
+  for (SIZE_T i = 0; i < PageCount; ++i)
+  {
+    if (!RemapPage(FirstPage + i * PAGE_SIZE, MappingFlags))
+    {
+      for (SIZE_T j = 0; j < i; ++j) RemapPage(FirstPage + i * PAGE_SIZE, CurrentFlags);
+      return FALSE;
+    }
+  }
+  return TRUE;
+}
+
 BOOL CheckUserAccess(const void *pBlock, SIZE_T Size)
 {
   for (UINTPTR VirtualPage = PAGE_ROUND_DOWN((UINTPTR)pBlock); VirtualPage < PAGE_ROUND_UP((UINTPTR)pBlock + Size); VirtualPage += PAGE_SIZE)
@@ -104,5 +120,15 @@ BOOL CheckUserAccess(const void *pBlock, SIZE_T Size)
     if (!IsUserPage(VirtualPage)) return FALSE;
   }
   return TRUE;
+}
+
+UINT GetRangeMappingFlags(UINTPTR FirstPage, SIZE_T PageCount)
+{
+  UINT MappingFlags = (UINT)GetPageMapping(FirstPage) & PAGE_FLAGS_MASK & ~MAPPING_PRESENT_BIT;
+  for (SIZE_T i = 1; i < PageCount; ++i)
+  {
+    if (((UINT)GetPageMapping(FirstPage + i * PAGE_SIZE) & PAGE_FLAGS_MASK & ~MAPPING_PRESENT_BIT) != MappingFlags) return 0;
+  }
+  return MappingFlags | MAPPING_PRESENT_BIT;
 }
 
