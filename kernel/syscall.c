@@ -107,7 +107,7 @@ void HandleSystemCall(SYSRET *pResult, SYSCALL Function, SYSCALL_ARGUMENTS Argum
       }
       break;
     case SYSCALL_SHARE_MAPPING:
-      /* TODO: Implement SYSCALL_SHARE_MAPPING */
+      /* TODO: Implement SYSCALL_SHARE_MAPPING for fast IPC */
       break;
     case SYSCALL_REMAP_MEMORY:
       *pResult = SYSRET_INVALID_ARGUMENT;
@@ -115,7 +115,7 @@ void HandleSystemCall(SYSRET *pResult, SYSCALL Function, SYSCALL_ARGUMENTS Argum
       {
         SIZE_T PageCount = PAGE_ROUND_UP(Arguments.B) >> PAGE_SHIFT;
         UINT Flags = GetRangeMappingFlags(Arguments.A, Arguments.B);
-        if (Flags & MAPPING_USER_MODE_BIT)
+        if ((Flags & MAPPING_USER_MODE_BIT) && !(Flags & MAPPING_EXTERNAL_BIT)) /* CAN REMAP ONLY OWNED MEMORY! */
         {
           Flags = (Arguments.B & MAP_MEMORY_READABLE) ? (Flags | MAPPING_READABLE_BIT) : (Flags & ~MAPPING_READABLE_BIT);
           Flags = (Arguments.B & MAP_MEMORY_WRITABLE) ? (Flags | MAPPING_WRITABLE_BIT) : (Flags & ~MAPPING_WRITABLE_BIT);

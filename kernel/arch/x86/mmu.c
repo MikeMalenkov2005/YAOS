@@ -110,9 +110,10 @@ UINTPTR GetPageMapping(UINTPTR VirtualPage)
   UINTPTR Page = pPageTable[PageIndex];
   /* Convert x86 Page Table Entry to Mapping */
   UINTPTR Mapping = (Page & PAGE_ADDRESS_MASK);
-  if (Page) Mapping |= MAPPING_READABLE_BIT | MAPPING_EXECUTABLE_BIT; /* Every Page is Readable and Executable on x86 */
   if (Page & PAGE_PRESENT_FLAG) Mapping |= MAPPING_PRESENT_BIT;
+  if (Page & PAGE_READABLE_FLAG) Mapping |= MAPPING_READABLE_BIT;
   if (Page & PAGE_WRITABLE_FLAG) Mapping |= MAPPING_WRITABLE_BIT;
+  if (Page & PAGE_EXECUTABLE_FLAG) Mapping |= MAPPING_EXECUTABLE_BIT;
   if (Page & PAGE_USER_FLAG) Mapping |= MAPPING_USER_MODE_BIT;
   if (Page & PAGE_GLOBAL_FLAG) Mapping |= MAPPING_GLOBAL_BIT;
   if (Page & PAGE_EXTERNAL_FLAG) Mapping |= MAPPING_EXTERNAL_BIT;
@@ -128,7 +129,9 @@ BOOL SetPageMapping(UINTPTR VirtualPage, UINTPTR Mapping)
   /* Convert Mapping to x86 Page Table Entry */
   UINTPTR Page = Mapping & PAGE_ADDRESS_MASK;
   if (Mapping & MAPPING_PRESENT_BIT) Page |= PAGE_PRESENT_FLAG;
+  if (Mapping & MAPPING_READABLE_BIT) Page |= PAGE_READABLE_FLAG;
   if (Mapping & MAPPING_WRITABLE_BIT) Page |= PAGE_WRITABLE_FLAG;
+  if (Mapping & MAPPING_EXECUTABLE_BIT) Page |= PAGE_EXECUTABLE_FLAG;
   if (Mapping & MAPPING_USER_MODE_BIT) Page |= PAGE_USER_FLAG;
   if (Mapping & MAPPING_GLOBAL_BIT) Page |= PAGE_GLOBAL_FLAG;
   if (Mapping & MAPPING_EXTERNAL_BIT) Page |= PAGE_EXTERNAL_FLAG;

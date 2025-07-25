@@ -22,7 +22,7 @@ typedef UINTPTR SYSCALL;
 #define SYSCALL_MAP_MEMORY    10  /* (Reserved, Size, Flags) */
 #define SYSCALL_MAP_DEVICE    11  /* (Reserved, Size, Mapping) System Module Only */
 #define SYSCALL_FREE_MAPPING  12  /* (VAddr, Size, 0) */
-#define SYSCALL_SHARE_MAPPING 13  /* (VAddr, Size, TaskID) */
+#define SYSCALL_SHARE_MAPPING 13  /* (VAddr, Size, TaskID) NOT IMPLEMENTED! */
 #define SYSCALL_REMAP_MEMORY  14  /* (VAddr, Size, Flags) */
 /* Device IRQ Handling */
 #define SYSCALL_WAIT_IRQ      30  /* (IRQ, 0, 0) System Module Only */

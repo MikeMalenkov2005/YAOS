@@ -124,11 +124,11 @@ BOOL CheckUserAccess(const void *pBlock, SIZE_T Size)
 
 UINT GetRangeMappingFlags(UINTPTR FirstPage, SIZE_T PageCount)
 {
-  UINT MappingFlags = (UINT)GetPageMapping(FirstPage) & PAGE_FLAGS_MASK & ~MAPPING_PRESENT_BIT;
+  UINT MappingFlags = (GetPageMapping(FirstPage) & PAGE_FLAGS_MASK) | MAPPING_PRESENT_BIT;
   for (SIZE_T i = 1; i < PageCount; ++i)
   {
-    if (((UINT)GetPageMapping(FirstPage + i * PAGE_SIZE) & PAGE_FLAGS_MASK & ~MAPPING_PRESENT_BIT) != MappingFlags) return 0;
+    if ((GetPageMapping(FirstPage + i * PAGE_SIZE) & PAGE_FLAGS_MASK) != (MappingFlags | MAPPING_PRESENT_BIT)) return 0;
   }
-  return MappingFlags | MAPPING_PRESENT_BIT;
+  return MappingFlags;
 }
 
