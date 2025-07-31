@@ -7,7 +7,7 @@ Message Format
 --------------
 
 Messages to this module are send in the form of a packed null-terminated array.
-Each command byte is folowed by its arguments and the zero command is signals
+Each command byte is folowed by its arguments and the zero command signals
 the end of the array.
 
 Supported Commands

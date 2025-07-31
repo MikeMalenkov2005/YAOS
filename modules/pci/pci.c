@@ -44,13 +44,13 @@ void EnumeratePCIDevices(PCI_DEVICE_CALLBACK pfnCallback)
   else EnumeratePCIBus(0, pfnCallback);
 }
 
-UINT16 ReadPCIDeviceConfig16(PCI_DEVICE Device, UINT8 Offset)
+UINT16 ReadPCIDeviceConfig16(PCI_DEVICE Device, UINT Offset)
 {
   UINT32 Result = ReadPCIDeviceConfig32(Device, Offset);
   return Result >> ((Offset & 2) << 3);
 }
 
-UINT8 ReadPCIDeviceConfig8(PCI_DEVICE Device, UINT8 Offset)
+UINT8 ReadPCIDeviceConfig8(PCI_DEVICE Device, UINT Offset)
 {
   UINT32 Result = ReadPCIDeviceConfig32(Device, Offset);
   return Result >> ((Offset & 3) << 3);

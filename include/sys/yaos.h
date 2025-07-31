@@ -1,8 +1,6 @@
 #ifndef SYS_YAOS_H
 #define SYS_YAOS_H
 
-#define KERNEL_MESSAGE_H /* To Prevent Unexpected Results */
-
 #include <sys/message.h>
 #include <sys/syscall.h>
 
@@ -82,6 +80,15 @@ inline static SYSRET WaitIRQ(UINTPTR IRQ)
 inline static SYSRET EndIRQ()
 {
   return InvokeSystemCall(SYSCALL_END_IRQ, 0, 0, 0);
+}
+
+inline static void PrepareResponse(MESSAGE *Message)
+{
+  for (UINT8 Index = 0; Index < sizeof(Message->Payload); ++Index)
+  {
+    Message->Payload[Index] = 0;
+  }
+  Message->ReceiverID = Message->SenderID;
 }
 
 #endif
